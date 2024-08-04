@@ -186,7 +186,7 @@ def fetch_xseg(input_path):
             io.log_info(f'{filepath} is not a DFLIMG file')
             continue
 
-        ie_polys = dflimg.get_seg_ie_polys(False)
+        ie_polys = dflimg.get_seg_ie_polys()
 
         if ie_polys.has_polys():
             files_copied.append(filepath)

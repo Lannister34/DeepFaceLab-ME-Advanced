@@ -257,7 +257,7 @@ class DFLJPG(object):
     def has_seg_ie_polys(self):
         return self.dfl_dict.get('seg_ie_polys',None) is not None
 
-    def get_seg_ie_polys(self, fetch_from_xseg=True):
+    def get_seg_ie_polys(self):
         d = self.dfl_dict.get('seg_ie_polys',None)
         if d is not None:
             d = SegIEPolys.load(d)
