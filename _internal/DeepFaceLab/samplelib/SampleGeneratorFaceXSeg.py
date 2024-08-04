@@ -29,11 +29,11 @@ class SampleGeneratorFaceXSeg(SampleGeneratorBase):
         if len(seg_sample_idxs) == 0:
             seg_sample_idxs = SegmentedSampleFilterSubprocessor(samples, count_xseg_mask=True).run()
             if len(seg_sample_idxs) == 0:
-                raise Exception(f"未发现 已写遮罩 的图片.")
+                raise Exception(f"Segmented faces not found.")
             else:
-                io.log_info(f"使用 {len(seg_sample_idxs)} 张 已写遮罩 的图片.")
+                io.log_info(f"Use {len(seg_sample_idxs)} xseg tagged samples.")
         else:
-            io.log_info(f"使用 {len(seg_sample_idxs)} 张 手动绘制.")
+            io.log_info(f"Use {len(seg_sample_idxs)} segmentation samples.")
 
         if self.debug:
             self.generators_count = 1

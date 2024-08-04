@@ -12,9 +12,9 @@ from multiprocessing import Value
 func = int(sys.argv[1])
 if func == 1:
     import xgboost as xgb
-    modelpath = r'_internal\DeepFaceLab\ErrFaceFilter\CL.model'
-    if not os.path.exists(os.path.join(os.getcwd(), modelpath)):
-        raise FileNotFoundError("未发现模型文件, 请将提供的模型文件放置于源代码目录内!")
+    model_path = Path(__file__).parent / 'CL.model'
+    if not os.path.exists(os.path.join(os.getcwd(), model_path)):
+        raise FileNotFoundError("No model files found, please place the provided model files in the source code directory!")
     Classifier = xgb.XGBClassifier()
     Classifier.load_model(modelpath)
 elif func == 2:
@@ -33,9 +33,9 @@ def LstCleaning(lst: list, path):
     for it in dellst:
         lst.remove(it)
     if len(lst) < 1:
-        raise FileNotFoundError('所选目录内未发现对象,请检查后重新运行!')
+        raise FileNotFoundError('No objects were found in the selected directory, please check and re-run!')
     else:
-        print('图像数量: \033[32m%d\033[0m' % len(lst))
+        print('Number of images: \033[32m%d\033[0m' % len(lst))
     lst.sort(key=lambda x: os.path.getmtime(os.path.join(path, x)))
 
 def draw(lst, fpath, lmdir, cnt):
@@ -45,7 +45,7 @@ def draw(lst, fpath, lmdir, cnt):
         path = Path(fpath + '/' + fname)
         dflimg = DFLIMG.load(path)
         if dflimg is None or not dflimg.has_data():
-            print(f'\n{fname} 不是有效的DFL头像文件!')
+            print(f'\n{fname} Not a valid DFL avatar file!')
             continue
         else:
             x, y = np.split(dflimg.get_landmarks(), 2, axis=1)
@@ -93,7 +93,7 @@ def CF(flst, path, errfacelst, cnt):
             cnt.value += 1
         dflimg = DFLIMG.load(Path(path + '/' + fname))
         if dflimg is None or not dflimg.has_data():
-            print(f'\n{fname} 不是有效的DFL头像文件!')
+            print(f'\n{fname} Not a valid DFL avatar file!')
             continue
         else:
             lm = dflimg.get_landmarks()
@@ -109,43 +109,43 @@ if __name__ == '__main__':
         os.system('cls')
         print("➜ 免 费 工 具, 放 心 白 嫖\n\033[33m➜ 作 者: 吃 果 子 的 果 子 狸\033[0m")
 
-        path = input('请拖入存放DFL头像的文件夹(例如aligned), 并按下 Enter 键\n(\033[33m警告: 目录及头像文件名请勿出现任何中文及空格\033[0m)\n➜ ')
+        path = input('Please drag and drop into the folder where the DFL avatar is stored (e.g. aligned), and press Enter \n(\033[33m Warning: Do not include any Chinese characters or spaces in the directory and avatar file name\033[0m)\n➜ ')
         if os.path.isdir(path):
             imagelst = os.listdir(path)
         else:
-            raise ValueError('请输入正确的目录')
+            raise ValueError('Please enter the correct catalog')
         os.system('cls')
-        print('已选择目录: ', path)
+        print('Selected Catalog: ', path)
         LstCleaning(imagelst, path)
         if func == 3:
-            print('脚本功能: 错脸清理')
+            print('Script Function: Wrong Face Cleanup')
             indir = os.path.join(path, 'Landmarks')
             if not os.path.exists(indir):
-                print('\n未找到Landmarks目录, 请检查后再次尝试!\n')
-                input('按任意键重启脚本...')
+                print('\nLandmarks directory not found, please check and try again!\n')
+                input('Press any key to restart the script...')
                 continue
             lmlst = os.listdir(indir)
-            print('%s目录, ' % indir, end='')
+            print('%scatalogs, ' % indir, end='')
             LstCleaning(lmlst, path)
             if len(lmlst) < len(imagelst):
                 trash = list(set(imagelst) - set(lmlst))
             else:
-                print('\n未检测到有Landmarks被剔除!\n')
-                input('按任意键重启脚本...')
+                print('\nNo Landmarks detected and rejected!\n')
+                input('Press any key to restart the script...')
                 continue
             movepath = os.path.join(path, 'errFace')
             if not os.path.exists(movepath):
                 os.makedirs(movepath)
-            print('清理数量: \033[33m%d\033[0m' % len(trash))
-            for it in tqdm(trash, desc='移动进程'):
+            print('Quantity cleared: \033[33m%d\033[0m' % len(trash))
+            for it in tqdm(trash, desc='workflow'):
                 src = os.path.join(path, it)
                 dst = os.path.join(movepath, it)
                 try:
                     shutil.move(src, dst)
                 except:
-                    print('%s 文件移动失败!', it)
-            print('\n错误头像已移动到 %s\n' % movepath)
-            input('按任意键重启脚本...')
+                    print('%s File move failed!', it)
+            print('\nThe error avatar has been moved to %s\n' % movepath)
+            input('Press any key to restart the script...')
         else:
             cpu = mp.cpu_count() - 1
             amount = len(imagelst) // cpu
@@ -158,17 +158,17 @@ if __name__ == '__main__':
                 checklst.append(imagelst[i * amount:(i + 1) * amount])
             progresscnt = Value('L', 0)
             if func == 1:
-                print('脚本功能: 自动筛查错脸')
+                print('Script Function: Automatically Screen Wrong Faces')
                 errfacelst = mp.Manager().list()
                 mptask = [mp.Process(target=CF, args=(checklst[i], path, errfacelst, progresscnt, ), daemon=True) for i in range(cpu)]
-                progress = tqdm(desc='检测进程', total=len(imagelst))
+                progress = tqdm(desc='detection process', total=len(imagelst))
             elif func == 2:
-                print('脚本功能: 轮廓勾画')
+                print('Script Function: Outlining')
                 LmDir = os.path.join(path, 'Landmarks')
                 if not os.path.exists(LmDir):
                     os.mkdir(LmDir)
                 mptask = [mp.Process(target=draw, args=(checklst[i], path, LmDir, progresscnt, ), daemon=True) for i in range(cpu)]
-                progress = tqdm(desc='绘画进程', total=len(imagelst))
+                progress = tqdm(desc='Painting process', total=len(imagelst))
             [t.start() for t in mptask]
             while progress.n < len(imagelst):
                 progress.n = progresscnt.value
@@ -177,22 +177,22 @@ if __name__ == '__main__':
             progress = None
             [t.join() for t in mptask]
             if func == 2:
-                input('\n任务已完成, 按任意键重启脚本...\n')
+                input('\nJob completed, press any key to restart the script....\n')
                 continue
 
             if len(errfacelst) < 1:
-                print('\n目录内似乎并没有错误的脸!')
-                input('\n任务已完成, 按任意键重启脚本...\n')
+                print("\nThere doesn't seem to be a wrong face within the catalog!")
+                input('\nJob completed, press any key to restart the script....\n')
                 continue
             errfacepath = os.path.join(path, 'errFace')
             if not os.path.exists(errfacepath):
                 os.mkdir(errfacepath)
-            for it in tqdm(errfacelst, desc='移动进程'):
+            for it in tqdm(errfacelst, desc='workflow'):
                 src = os.path.join(path, it)
                 dst = os.path.join(errfacepath, it)
                 try:
                     shutil.move(src, dst)
                 except:
-                    print('提示: %s 文件未能成功移动,请手动处理!' % it)
-            print('\n找到了 \033[33m%d\033[0m 张似乎错误的头像, 并移动到了 %s' % (len(errfacelst), errfacepath))
-            input('\n任务已完成, 按任意键重启脚本...\n')
+                    print('draw attention to sth.: %s The file was not moved successfully, please process manually.!' % it)
+            print('\nI found \033[33m%d\033[0m the wrong avatar, and moved it. %s' % (len(errfacelst), errfacepath))
+            input('\nJob completed, press any key to restart the script....\n')

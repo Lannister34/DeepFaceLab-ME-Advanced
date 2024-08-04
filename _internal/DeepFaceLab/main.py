@@ -1,8 +1,8 @@
 if __name__ == "__main__":
-    # 取消注释以在 PDB 中启动 DFL
+    # Uncomment to read in PDB Start in DFL
     # __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
 
-    # 适用于 Linux 的修复
+    # Applicable to Linux repair
     import multiprocessing
 
     multiprocessing.set_start_method("spawn")
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     if sys.version_info[0] < 3 or (
         sys.version_info[0] == 3 and sys.version_info[1] < 6
     ):
-        raise Exception("该程序至少需要 Python 3.6 版本")
+        raise Exception("The program requires at least Python 3.6 Version")
 
     class fixPathAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
@@ -62,55 +62,55 @@ if __name__ == "__main__":
             else None,
         )
 
-    p = subparsers.add_parser("extract", help="从图片中提取人脸。")
+    p = subparsers.add_parser("extract", help="Extract faces from images.")
     p.add_argument(
         "--detector",
         dest="detector",
         choices=["s3fd", "manual"],
         default=None,
-        help="人脸框取检测器类型。",
+        help="Face frame detector type.",
     )
     p.add_argument(
         "--extract-from-video",
         dest="extract_from_video",
         action="store_true",
         default=False,
-        help="直接从视频文件提取对齐图像",
+        help="Extract aligned images directly from video files",
     )
     p.add_argument(
         "--input-video",
         required=False,
         action=fixPathAction,
         dest="input_video",
-        help="输入待处理的视频。指定 .*-扩展名 找到第一个满足的文件。",
+        help="Enter the video to be processed. designation .*-extension name Find the first satisfying file.",
     )
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="输入目录。包含您希望处理的文件的目录。",
+        help="Enter directory. The directory containing the files you wish to process.",
     )
     p.add_argument(
         "--output-dir",
         required=True,
         action=fixPathAction,
         dest="output_dir",
-        help="输出目录。这是提取的切脸文件将被存储的地方。",
+        help="Output directory. This is where the extracted face cut files will be stored.",
     )
     p.add_argument(
         "--output-debug",
         action="store_true",
         dest="output_debug",
         default=None,
-        help="将 debug 图像写入 <output-dir>_debug\ 目录。",
+        help="Will debug image writing <output-dir>_debug\ Table of contents.",
     )
     p.add_argument(
         "--no-output-debug",
         action="store_false",
         dest="output_debug",
         default=None,
-        help="不将 debug 图像写入 <output-dir>_debug\ 目录。",
+        help="will not debug image writing <output-dir>_debug\ Table of contents.",
     )
     p.add_argument(
         "--face-type",
@@ -123,62 +123,62 @@ if __name__ == "__main__":
         type=int,
         dest="max_faces_from_image",
         default=None,
-        help="每张图片最大提取的人脸数量。",
+        help="The maximum number of faces extracted from each picture.",
     )
     p.add_argument(
-        "--image-size", type=int, dest="image_size", default=None, help="输出图像尺寸。"
+        "--image-size", type=int, dest="image_size", default=None, help="Output image size."
     )
     p.add_argument(
-        "--jpeg-quality", type=int, dest="jpeg_quality", default=None, help="Jpeg 质量。"
+        "--jpeg-quality", type=int, dest="jpeg_quality", default=None, help="Jpeg quality."
     )
     p.add_argument(
-        "--fps", type=int, dest="fps", default=None, help="视频中每秒提取的帧数。0 - 完整 fps。"
+        "--fps", type=int, dest="fps", default=None, help="The number of frames extracted per second from the video. 0 - whole fps."
     )
     p.add_argument(
         "--chunk-size",
         type=int,
         dest="chunk_size",
         default=None,
-        help="启用从视频提取时，允许选择 DFL 可以在内存中保存的最大帧数",
+        help="When extracting from video is enabled，Allow selection DFL Maximum number of frames that can be saved in memory",
     )
     p.add_argument(
         "--manual-fix",
         action="store_true",
         dest="manual_fix",
         default=False,
-        help="启用手动仅提取未识别出人脸的帧。",
+        help="Enable manual extraction of only frames with no recognized faces.",
     )
     p.add_argument(
         "--manual-output-debug-fix",
         action="store_true",
         dest="manual_output_debug_fix",
         default=False,
-        help="对从 [output_dir]_debug\ 目录删除的 input-dir 帧执行手动重新提取。",
+        help="Correspondence [output_dir]_debug\ Directory deleted input-dir Frame performs manual re-extraction.",
     )
     p.add_argument(
         "--manual-window-size",
         type=int,
         dest="manual_window_size",
         default=1368,
-        help="手动修复窗口大小。默认：1368。",
+        help="Manually fix window size. default：1368.",
     )
     p.add_argument(
         "--cpu-only",
         action="store_true",
         dest="cpu_only",
         default=False,
-        help="在 CPU 上提取。",
+        help="exist CPU Extract on.",
     )
     p.add_argument(
         "--force-gpu-idxs",
         dest="force_gpu_idxs",
         default=None,
-        help="强制选择用逗号分隔的 GPU 索引。",
+        help="Force selection comma separated GPU index.",
     )
 
     p.set_defaults(func=process_extract)
 
-    # 定义提取过程的函数
+    # Function that defines the extraction process
     def process_sort(arguments):
         osex.set_process_lowest_prio()
         from mainscripts import Sorter
@@ -188,13 +188,13 @@ if __name__ == "__main__":
             sort_by_method=arguments.sort_by_method,
         )
 
-    p = subparsers.add_parser("sort", help="S对目录中的人脸进行排序。")
+    p = subparsers.add_parser("sort", help="SSort faces in directory.")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="输入目录。包含您希望处理的文件的目录。",
+        help="Enter directory. The directory containing the files you wish to process.",
     )
     p.add_argument(
         "--by",
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     )
     p.set_defaults(func=process_sort)
 
-    # 定义工具处理函数
+    # Define tool processing functions
     def process_util(arguments):
         osex.set_process_lowest_prio()
         from mainscripts import Util
@@ -239,78 +239,78 @@ if __name__ == "__main__":
             Util.restore_faceset_metadata_folder(input_path=arguments.input_dir)
 
         if arguments.pack_faceset:
-            io.log_info("执行人脸数据集打包...\r\n")
+            io.log_info("Execute face data set packaging...\r\n")
             from samplelib import PackedFaceset
 
             PackedFaceset.pack(Path(arguments.input_dir), ext=arguments.archive_type)
 
         if arguments.unpack_faceset:
-            io.log_info("执行人脸数据集解包...\r\n")
+            io.log_info("Execute face dataset unpacking...\r\n")
             from samplelib import PackedFaceset
 
             PackedFaceset.unpack(Path(arguments.input_dir))
 
         if arguments.export_faceset_mask:
-            io.log_info("导出人脸数据集遮罩..\r\n")
+            io.log_info("Export face dataset masks..\r\n")
             Util.export_faceset_mask(Path(arguments.input_dir))
 
-    # 添加“util”子命令和帮助信息
-    p = subparsers.add_parser("util", help="实用工具。")
+    # Add to“util”Subcommands and help information
+    p = subparsers.add_parser("util", help="Utilities.")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="输入目录。包含您希望处理的文件的目录。",
+        help="Enter directory. The directory containing the files you wish to process.",
     )
     p.add_argument(
         "--add-landmarks-debug-images",
         action="store_true",
         dest="add_landmarks_debug_images",
         default=False,
-        help="为对齐的人脸添加地标调试图像。",
+        help="Add landmark debug image for aligned faces.",
     )
     p.add_argument(
         "--recover-original-aligned-filename",
         action="store_true",
         dest="recover_original_aligned_filename",
         default=False,
-        help="恢复原始对齐文件名。",
+        help="Restore original aligned file names.",
     )
     p.add_argument(
         "--save-faceset-metadata",
         action="store_true",
         dest="save_faceset_metadata",
         default=False,
-        help="将人脸数据集元数据保存到文件。",
+        help="Save face dataset metadata to file.",
     )
     p.add_argument(
         "--restore-faceset-metadata",
         action="store_true",
         dest="restore_faceset_metadata",
         default=False,
-        help="从文件恢复人脸数据集元数据。使用时图像文件名必须与保存时相同。",
+        help="Recover face dataset metadata from file. The image file name must be the same when using it as when saving it.",
     )
     p.add_argument(
         "--pack-faceset",
         action="store_true",
         dest="pack_faceset",
         default=False,
-        help="打包人脸数据集。",
+        help="Packaged face dataset.",
     )
     p.add_argument(
         "--unpack-faceset",
         action="store_true",
         dest="unpack_faceset",
         default=False,
-        help="解包人脸数据集。",
+        help="Unpacking the face dataset.",
     )
     p.add_argument(
         "--export-faceset-mask",
         action="store_true",
         dest="export_faceset_mask",
         default=False,
-        help="导出人脸数据集遮罩。",
+        help="Export face dataset masks.",
     )
     p.add_argument(
         "--archive-type", dest="archive_type", choices=["zip", "pak"], default=None
@@ -318,7 +318,7 @@ if __name__ == "__main__":
 
     p.set_defaults(func=process_util)
 
-    # 定义训练处理函数
+    # Define training processing function
     def process_train(arguments):
         osex.set_process_lowest_prio()
 
@@ -357,28 +357,28 @@ if __name__ == "__main__":
 
         Trainer.main(**kwargs)
 
-    # 添加“train”子命令和帮助信息
-    p = subparsers.add_parser("train", help="训练器")
+    # Add to“train”Subcommands and help information
+    p = subparsers.add_parser("train", help="trainer")
     p.add_argument(
         "--training-data-src-dir",
         required=True,
         action=fixPathAction,
         dest="training_data_src_dir",
-        help="提取的 SRC 人脸数据集的目录。",
+        help="extracted SRC Directory of face dataset.",
     )
     p.add_argument(
         "--training-data-dst-dir",
         required=True,
         action=fixPathAction,
         dest="training_data_dst_dir",
-        help="提取的 DST 人脸数据集的目录。",
+        help="extracted DST Directory of face dataset.",
     )
     p.add_argument(
         "--pretraining-data-dir",
         action=fixPathAction,
         dest="pretraining_data_dir",
         default=None,
-        help="用于预训练模式的可选提取人脸数据集目录。",
+        help="Catalog of optional extracted face datasets for pre-training mode.",
     )
     p.add_argument(
         "--src-pak-name",
@@ -386,7 +386,7 @@ if __name__ == "__main__":
         dest="src_pak_name",
         type=str,
         default=None,
-        help="要使用的 src 人脸数据集包的名称",
+        help="to be used src The name of the face dataset package",
     )
     p.add_argument(
         "--dst-pak-name",
@@ -394,21 +394,21 @@ if __name__ == "__main__":
         dest="dst_pak_name",
         type=str,
         default=None,
-        help="要使用的 dst 人脸数据集包的名称",
+        help="to be used dst The name of the face dataset package",
     )
     p.add_argument(
         "--pretrained-model-dir",
         action=fixPathAction,
         dest="pretrained_model_dir",
         default=None,
-        help="预训练模型文件的可选目录。（目前仅适用于 Quick96）。",
+        help="Optional directory for pretrained model files. （Currently only available for Quick96）.",
     )
     p.add_argument(
         "--model-dir",
         required=True,
         action=fixPathAction,
         dest="model_dir",
-        help="保存模型的目录。",
+        help="Directory to save the model.",
     )
     p.add_argument(
         "--model",
@@ -417,79 +417,79 @@ if __name__ == "__main__":
         choices=pathex.get_all_dir_names_startswith(
             Path(__file__).parent / "models", "Model_"
         ),
-        help="模型类名称。",
+        help="Model class name.",
     )
     p.add_argument(
-        "--debug", action="store_true", dest="debug", default=False, help="调试样本。"
+        "--debug", action="store_true", dest="debug", default=False, help="Debugging samples."
     )
     p.add_argument(
-        "--saving-time", type=int, dest="saving_time", default=25, help="模型保存间隔。"
+        "--saving-time", type=int, dest="saving_time", default=25, help="Model save interval."
     )
     p.add_argument(
         "--no-preview",
         action="store_true",
         dest="no_preview",
         default=False,
-        help="禁用预览窗口。",
+        help="Disable preview window.",
     )
     p.add_argument(
         "--force-model-name",
         dest="force_model_name",
         default=None,
-        help="强制从 model/ 文件夹中选择模型名称。",
+        help="forced to obey model/ Select the model name in the folder.",
     )
     p.add_argument(
         "--cpu-only",
         action="store_true",
         dest="cpu_only",
         default=False,
-        help="在 CPU 上训练。",
+        help="exist CPU training.",
     )
     p.add_argument(
         "--force-gpu-idxs",
         dest="force_gpu_idxs",
         default=None,
-        help="强制选择用逗号分隔的 GPU 索引。",
+        help="Force selection comma separated GPU index.",
     )
     p.add_argument(
         "--silent-start",
         action="store_true",
         dest="silent_start",
         default=False,
-        help="静默启动。自动选择最佳 GPU 和上次使用的模型。",
+        help="Silent startup. Automatically select the best GPU and the last used model.",
     )
     p.add_argument(
         "--tensorboard-logdir",
         action=fixPathAction,
         dest="tensorboard_dir",
-        help="Tensorboard 输出文件的目录",
+        help="Tensorboard Directory for output files",
     )
     p.add_argument(
         "--start-tensorboard",
         action="store_true",
         dest="start_tensorboard",
         default=False,
-        help="自动启动预配置到 tensorboard-logdir 的 tensorboard 服务器",
+        help="Automatically start preconfigured to tensorboard-logdir of tensorboard server",
     )
     p.add_argument(
         "--config-training-file",
         action=fixPathAction,
         dest="config_training_file",
-        help="自定义 yaml 配置文件的路径",
+        help="customize yaml The path to the configuration file",
     )
     p.add_argument(
         "--auto-gen-config",
         action="store_true",
         dest="auto_gen_config",
         default=False,
-        help="为训练器中使用的每个模型保存配置文件。它将具有相同的模型名称",
+        help="Save configuration files for each model used in the trainer. It will have the same model name",
     )
     p.add_argument(
         "--reduce-clutter",
         action="store_true",
         dest="reduce_clutter",
         default=False,
-        help="从打印的摘要中移除未使用的选项",
+        help="Remove unused options from printed summary",
     )
 
     p.add_argument(
@@ -497,14 +497,14 @@ if __name__ == "__main__":
         action="store_true",
         dest="gen_snapshot",
         default=False,
-        help="仅生成一组快照。",
+        help="Generate only one set of snapshots.",
     )
     p.add_argument(
         "--flask-preview",
         action="store_true",
         dest="flask_preview",
         default=False,
-        help="启动一个 flask 服务器，在 web 浏览器中查看预览",
+        help="start a flask server，exist web View preview in browser",
     )
 
     p.add_argument(
@@ -516,7 +516,7 @@ if __name__ == "__main__":
     )
     p.set_defaults(func=process_train)
 
-    # 定义 exportdfm 处理函数
+    # definition exportdfm Handling function
     def process_exportdfm(arguments):
         osex.set_process_lowest_prio()
         from mainscripts import ExportDFM
@@ -526,14 +526,14 @@ if __name__ == "__main__":
             saved_models_path=Path(arguments.model_dir),
         )
 
-    # 添加“exportdfm”子命令和帮助信息
-    p = subparsers.add_parser("exportdfm", help="导出用于 DeepFaceLive 的模型。")
+    # Add to“exportdfm”Subcommands and help information
+    p = subparsers.add_parser("exportdfm", help="Export for DeepFaceLive model.")
     p.add_argument(
         "--model-dir",
         required=True,
         action=fixPathAction,
         dest="model_dir",
-        help="已保存模型的目录。",
+        help="Directory of saved models.",
     )
     p.add_argument(
         "--model",
@@ -542,27 +542,27 @@ if __name__ == "__main__":
         choices=pathex.get_all_dir_names_startswith(
             Path(__file__).parent / "models", "Model_"
         ),
-        help="模型类名称。",
+        help="Model class name.",
     )
     p.set_defaults(func=process_exportdfm)
 
-    # 定义 ampconverter 处理函数
+    # definition ampconverter Handling function
     def process_ampconverter(arguments):
         from mainscripts import AmpConverter
 
         AmpConverter.main(saved_models_path=Path(arguments.model_dir))
 
-    p = subparsers.add_parser("ampconverter", help="重命名模型文件以用于 AMPModel。仅适用于 AMP 模型。")
+    p = subparsers.add_parser("ampconverter", help="Rename the model file for AMPModel. Only applies to AMP Model.")
     p.add_argument(
         "--model-dir",
         required=True,
         action=fixPathAction,
         dest="model_dir",
-        help="保存模型的目录。",
+        help="Directory to save the model.",
     )
     p.set_defaults(func=process_ampconverter)
 
-    # 定义合并处理函数
+    # Define merge processing function
     def process_merge(arguments):
         osex.set_process_lowest_prio()
         from mainscripts import Merger
@@ -583,35 +583,35 @@ if __name__ == "__main__":
             cpu_only=arguments.cpu_only,
         )
 
-    # 添加“merge”子命令和帮助信息
-    p = subparsers.add_parser("merge", help="合并器")
+    # Add to“merge”Subcommands and help information
+    p = subparsers.add_parser("merge", help="combiner")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="输入目录。包含您希望处理的文件的目录。",
+        help="Enter directory. The directory containing the files you wish to process.",
     )
     p.add_argument(
         "--output-dir",
         required=True,
         action=fixPathAction,
         dest="output_dir",
-        help="输出目录。合并文件将被存储在此处。",
+        help="Output directory. Merged files will be stored here.",
     )
     p.add_argument(
         "--output-mask-dir",
         required=True,
         action=fixPathAction,
         dest="output_mask_dir",
-        help="输出掩码目录。掩码文件将被存储在此处。",
+        help="Output mask directory. The mask file will be stored here.",
     )
     p.add_argument(
         "--aligned-dir",
         action=fixPathAction,
         dest="aligned_dir",
         default=None,
-        help="对齐目录。这是存储提取的目标面部的位置。",
+        help="Align table of contents. This is where the extracted target face is stored.",
     )
     p.add_argument(
         "--pak-name",
@@ -619,14 +619,14 @@ if __name__ == "__main__":
         dest="pak_name",
         type=str,
         default=None,
-        help="使用的人脸集包的名称",
+        help="The name of the face collection package to use",
     )
     p.add_argument(
         "--model-dir",
         required=True,
         action=fixPathAction,
         dest="model_dir",
-        help="模型目录。",
+        help="Model catalog.",
     )
     p.add_argument(
         "--model",
@@ -635,35 +635,35 @@ if __name__ == "__main__":
         choices=pathex.get_all_dir_names_startswith(
             Path(__file__).parent / "models", "Model_"
         ),
-        help="模型类名称。",
+        help="Model class name.",
     )
     p.add_argument(
         "--force-model-name",
         dest="force_model_name",
         default=None,
-        help="强制从model/文件夹中选择模型名称。",
+        help="forced to obeymodel/Select the model name in the folder.",
     )
     p.add_argument(
         "--cpu-only",
         action="store_true",
         dest="cpu_only",
         default=False,
-        help="仅使用CPU合并。",
+        help="Only useCPUmerge.",
     )
     p.add_argument(
-        "--force-gpu-idxs", dest="force_gpu_idxs", default=None, help="强制选择用逗号分隔的GPU索引。"
+        "--force-gpu-idxs", dest="force_gpu_idxs", default=None, help="Force selection comma separatedGPUindex."
     )
     p.add_argument(
         "--reduce-clutter",
         action="store_true",
         dest="reduce_clutter",
         default=False,
-        help="从打印的摘要中移除未使用的选项",
+        help="Remove unused options from printed summary",
     )
     p.add_argument('--xseg-dir', required=True, action=fixPathAction, dest="xseg_dir", help="XSeg dir.")
     p.set_defaults(func=process_merge)
 
-    videoed_parser = subparsers.add_parser("videoed", help="视频处理。").add_subparsers()
+    videoed_parser = subparsers.add_parser("videoed", help="video processing.").add_subparsers()
 
     def process_videoed_extract_video(arguments):
         osex.set_process_lowest_prio()
@@ -676,26 +676,26 @@ if __name__ == "__main__":
             arguments.fps,
         )
 
-    p = videoed_parser.add_parser("extract-video", help="从视频文件提取图像。")
+    p = videoed_parser.add_parser("extract-video", help="Extract images from video files.")
     p.add_argument(
         "--input-file",
         required=True,
         action=fixPathAction,
         dest="input_file",
-        help="要处理的输入文件。指定.*-扩展名以查找第一个文件。",
+        help="input file to process. designation.*-extension to find the first file.",
     )
     p.add_argument(
         "--output-dir",
         required=True,
         action=fixPathAction,
         dest="output_dir",
-        help="输出目录。提取的图像将被存储在此处。",
+        help="Output directory. Extracted images will be stored here.",
     )
     p.add_argument(
-        "--output-ext", dest="output_ext", default=None, help="输出文件的图像格式（扩展名）。"
+        "--output-ext", dest="output_ext", default=None, help="Image format of output file（extension name）."
     )
     p.add_argument(
-        "--fps", type=int, dest="fps", default=None, help="每秒视频将被提取的帧数。0fps - 视频fps"
+        "--fps", type=int, dest="fps", default=None, help="The number of frames per second the video will be extracted from. 0fps - videofps"
     )
     p.set_defaults(func=process_videoed_extract_video)
 
@@ -711,29 +711,29 @@ if __name__ == "__main__":
             arguments.bitrate,
         )
 
-    p = videoed_parser.add_parser("cut-video", help="剪切视频文件。")
+    p = videoed_parser.add_parser("cut-video", help="Cut video files.")
     p.add_argument(
         "--input-file",
         required=True,
         action=fixPathAction,
         dest="input_file",
-        help="要处理的输入文件。指定.*-扩展名以查找第一个文件。",
+        help="input file to process. designation.*-extension to find the first file.",
     )
     p.add_argument(
-        "--from-time", dest="from_time", default=None, help="开始时间，例如 00:00:00.000"
+        "--from-time", dest="from_time", default=None, help="Starting time，For example 00:00:00.000"
     )
     p.add_argument(
-        "--to-time", dest="to_time", default=None, help="结束时间，例如 00:00:00.000"
+        "--to-time", dest="to_time", default=None, help="End Time，For example 00:00:00.000"
     )
     p.add_argument(
         "--audio-track-id",
         type=int,
         dest="audio_track_id",
         default=None,
-        help="指定音轨ID。",
+        help="Specify audio trackID.",
     )
     p.add_argument(
-        "--bitrate", type=int, dest="bitrate", default=None, help="输出文件的比特率（兆比特）。"
+        "--bitrate", type=int, dest="bitrate", default=None, help="The bitrate of the output file（megabit）."
     )
     p.set_defaults(func=process_videoed_cut_video)
 
@@ -744,17 +744,17 @@ if __name__ == "__main__":
         VideoEd.denoise_image_sequence(arguments.input_dir, arguments.factor)
 
     p = videoed_parser.add_parser(
-        "denoise-image-sequence", help="对图像序列进行降噪，保持清晰的边缘。帮助去除预测面部的像素抖动。"
+        "denoise-image-sequence", help="Denoise an image sequence，Keep sharp edges. Helps remove pixel jitter from predicted faces."
     )
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="要处理的输入目录。",
+        help="Input directory to process.",
     )
     p.add_argument(
-        "--factor", type=int, dest="factor", default=None, help="降噪因子（1-20）。"
+        "--factor", type=int, dest="factor", default=None, help="Noise reduction factor（1-20）."
     )
     p.set_defaults(func=process_videoed_denoise_image_sequence)
 
@@ -773,53 +773,53 @@ if __name__ == "__main__":
             lossless=arguments.lossless,
         )
 
-    p = videoed_parser.add_parser("video-from-sequence", help="从图像序列制作视频。")
+    p = videoed_parser.add_parser("video-from-sequence", help="Make a video from an image sequence.")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="要处理的输入文件。指定.*-扩展名以查找第一个文件。",
+        help="input file to process. designation.*-extension to find the first file.",
     )
     p.add_argument(
         "--output-file",
         required=True,
         action=fixPathAction,
         dest="output_file",
-        help="要处理的输入文件。指定.*-扩展名以查找第一个文件。",
+        help="input file to process. designation.*-extension to find the first file.",
     )
     p.add_argument(
         "--reference-file",
         action=fixPathAction,
         dest="reference_file",
-        help="参考文件用于确定正确的FPS并从中传输音频。指定.*-扩展名以查找第一个文件。",
+        help="Reference documents are used to determine the correctFPSand stream audio from. designation.*-extension to find the first file.",
     )
-    p.add_argument("--ext", dest="ext", default="png", help="输入文件的图像格式（扩展名）。")
+    p.add_argument("--ext", dest="ext", default="png", help="Image format of input file（extension name）.")
     p.add_argument(
-        "--fps", type=int, dest="fps", default=None, help="输出文件的FPS。会被参考文件覆盖。"
+        "--fps", type=int, dest="fps", default=None, help="output fileFPS. Will be overwritten by the reference file."
     )
     p.add_argument(
-        "--bitrate", type=int, dest="bitrate", default=None, help="输出文件的比特率（兆比特）。"
+        "--bitrate", type=int, dest="bitrate", default=None, help="The bitrate of the output file（megabit）."
     )
     p.add_argument(
         "--include-audio",
         action="store_true",
         dest="include_audio",
         default=False,
-        help="包含参考文件的音频。",
+        help="Audio containing reference files.",
     )
     p.add_argument(
         "--lossless",
         action="store_true",
         dest="lossless",
         default=False,
-        help="无损PNG编码。",
+        help="LosslessPNGcoding.",
     )
 
     p.set_defaults(func=process_videoed_video_from_sequence)
 
     facesettool_parser = subparsers.add_parser(
-        "facesettool", help="人脸集工具。"
+        "facesettool", help="Face set tool."
     ).add_subparsers()
 
     def process_faceset_enhancer(arguments):
@@ -832,34 +832,34 @@ if __name__ == "__main__":
             force_gpu_idxs=arguments.force_gpu_idxs,
         )
 
-    p = facesettool_parser.add_parser("enhance", help="增强DFL人脸集中的细节。")
+    p = facesettool_parser.add_parser("enhance", help="EnhanceDFLConcentrated details on faces.")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="对齐人脸的输入目录。",
+        help="Input directory for aligning faces.",
     )
     p.add_argument(
         "--cpu-only",
         action="store_true",
         dest="cpu_only",
         default=False,
-        help="在CPU上处理。",
+        help="existCPUprocessing.",
     )
     p.add_argument(
-        "--force-gpu-idxs", dest="force_gpu_idxs", default=None, help="强制选择用逗号分隔的GPU索引。"
+        "--force-gpu-idxs", dest="force_gpu_idxs", default=None, help="Force selection comma separatedGPUindex."
     )
 
     p.set_defaults(func=process_faceset_enhancer)
 
-    p = facesettool_parser.add_parser("resize", help="调整DFL人脸集的大小。")
+    p = facesettool_parser.add_parser("resize", help="AdjustmentDFLFace set size.")
     p.add_argument(
         "--input-dir",
         required=True,
         action=fixPathAction,
         dest="input_dir",
-        help="对齐人脸的输入目录。",
+        help="Input directory for aligning faces.",
     )
 
     def process_faceset_resizer(arguments):
@@ -876,14 +876,14 @@ if __name__ == "__main__":
 
         dev_misc.dev_test(arguments.input_dir)
 
-    p = subparsers.add_parser("dev_test", help="开发测试")
+    p = subparsers.add_parser("dev_test", help="development testing")
     p.add_argument("--input-dir", required=True, action=fixPathAction, dest="input_dir")
     p.set_defaults(func=process_dev_test)
 
     # ========== XSeg
-    xseg_parser = subparsers.add_parser("xseg", help="XSeg 工具。").add_subparsers()
+    xseg_parser = subparsers.add_parser("xseg", help="XSeg tool.").add_subparsers()
 
-    p = xseg_parser.add_parser("editor", help="XSeg 编辑器。")
+    p = xseg_parser.add_parser("editor", help="XSeg editor.")
 
     def process_xsegeditor(arguments):
         osex.set_process_lowest_prio()
@@ -896,7 +896,7 @@ if __name__ == "__main__":
 
     p.set_defaults(func=process_xsegeditor)
 
-    p = xseg_parser.add_parser("apply", help="将训练过的 XSeg 模型应用于提取的面部。")
+    p = xseg_parser.add_parser("apply", help="will be trained XSeg The model is applied to the extracted faces.")
 
     def process_xsegapply(arguments):
         osex.set_process_lowest_prio()
@@ -908,7 +908,7 @@ if __name__ == "__main__":
     p.add_argument("--model-dir", required=True, action=fixPathAction, dest="model_dir")
     p.set_defaults(func=process_xsegapply)
 
-    p = xseg_parser.add_parser("remove", help="从提取的面部中移除应用的 XSeg 遮罩。")
+    p = xseg_parser.add_parser("remove", help="Remove applied XSeg Mask.")
 
     def process_xsegremove(arguments):
         osex.set_process_lowest_prio()
@@ -919,7 +919,7 @@ if __name__ == "__main__":
     p.add_argument("--input-dir", required=True, action=fixPathAction, dest="input_dir")
     p.set_defaults(func=process_xsegremove)
 
-    p = xseg_parser.add_parser("remove_labels", help="从提取的面部中移除 XSeg 标签。")
+    p = xseg_parser.add_parser("remove_labels", help="Removed from extracted faces XSeg Label.")
 
     def process_xsegremovelabels(arguments):
         osex.set_process_lowest_prio()
@@ -930,7 +930,7 @@ if __name__ == "__main__":
     p.add_argument("--input-dir", required=True, action=fixPathAction, dest="input_dir")
     p.set_defaults(func=process_xsegremovelabels)
 
-    p = xseg_parser.add_parser("fetch", help="复制包含 XSeg 多边形的面部到 <input_dir>_xseg 目录。")
+    p = xseg_parser.add_parser("fetch", help="Copy contains XSeg polygonal face to <input_dir>_xseg Table of contents.")
 
     def process_xsegfetch(arguments):
         osex.set_process_lowest_prio()
@@ -962,7 +962,7 @@ if __name__ == "__main__":
         required=True,
         action=fixPathAction,
         dest="model_dir",
-        help="模型目录。",
+        help="Model catalog.",
     )
     p.add_argument(
         "--model",
@@ -971,10 +971,10 @@ if __name__ == "__main__":
         choices=pathex.get_all_dir_names_startswith(
             Path(__file__).parent / "models", "Model_"
         ),
-        help="模型类名称。",
+        help="Model class name.",
     )
-    p.add_argument("--f1", required=True, action=fixPathAction, dest="f1", help="文件 1。")
-    p.add_argument("--f2", required=True, action=fixPathAction, dest="f2", help="文件 2。")
+    p.add_argument("--f1", required=True, action=fixPathAction, dest="f1", help="document 1.")
+    p.add_argument("--f2", required=True, action=fixPathAction, dest="f2", help="document 2.")
     p.set_defaults(func=process_latents)
 
     def bad_args(arguments):
@@ -983,15 +983,11 @@ if __name__ == "__main__":
 
     parser.set_defaults(func=bad_args)
 
-    from utils.logo import print_community_info
-
-    print_community_info()
-
     arguments = parser.parse_args()
     arguments.func(arguments)
 
     if exit_code == 0:
-        print("完成。")
+        print("Finish.")
 
     exit(exit_code)
 

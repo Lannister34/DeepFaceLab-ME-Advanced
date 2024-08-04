@@ -14,15 +14,11 @@ import models
 from core.interact import interact as io
 import win32gui
 
-
-
 class GlobalMeanLoss:
     def __init__(self):
         self.src = "未记录"
         self.dst = "未记录"
 
-global global_mean_loss
-global_mean_loss = GlobalMeanLoss()
 
 def trainerThread (s2c, c2s, e,
                     model_class_name = None,
@@ -39,6 +35,9 @@ def trainerThread (s2c, c2s, e,
                     execute_programs = None,
                     debug=False,
                     **kwargs):
+    
+    global global_mean_loss
+    global_mean_loss = GlobalMeanLoss()
     
     while True:
         try:

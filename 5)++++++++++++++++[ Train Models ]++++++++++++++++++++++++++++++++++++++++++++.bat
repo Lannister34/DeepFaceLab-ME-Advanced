@@ -1,0 +1,17 @@
+@echo off
+chcp 936 > nul
+attrib -h "5)-----------[ Train Models ]-------------------------------------------------------------------------------------------.bat"
+attrib +h "5)++++++++++++++++[ Train Models ]++++++++++++++++++++++++++++++++++++++++++++.bat"
+attrib +h "5.0)--- transfer SAEHD format.bat"
+attrib +h "5.1)--- train AMP.bat"
+attrib +h "5.1)--- train AMP with conf.bat"
+attrib +h "5.2)--- train ME model Open WEB.bat"
+attrib +h "5.2)--- train ME WEB Real-Time.bat"
+attrib +h "5.2)--- train ME WEB statistics.bat"
+attrib +h "5.2)--- train ME.bat"
+attrib +h "5.2)--- train ME with conf.bat"
+attrib +h "5.2)--- train Quick224.bat"
+attrib +h "5.2)--- train Quick512.bat"
+attrib +h "5.3)--- train ME with snapshot&lossdata.bat"
+attrib +h "5.4)--- train Recent SAEHD.bat"
+attrib +h "5.4)--- train SAEHD.bat"

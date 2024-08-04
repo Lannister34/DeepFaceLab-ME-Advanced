@@ -72,10 +72,10 @@ def extract_vggface2_dataset(input_dir, device_args={} ):
 
     face_type = FaceType.fromString('full_face')
 
-    io.log_info ('执行第二遍处理...')
+    io.log_info ('Perform the second processing...')
     data = ExtractSubprocessor (data, 'landmarks', 256, face_type, debug_dir=None, multi_gpu=multi_gpu, cpu_only=cpu_only, manual=False).run()
 
-    io.log_info ('执行第三遍处理...')
+    io.log_info ('Perform the third processing...')
     ExtractSubprocessor (data, 'final', 256, face_type, debug_dir=None, multi_gpu=multi_gpu, cpu_only=cpu_only, manual=False, final_output_path=None).run()
 
 
@@ -222,16 +222,16 @@ def dev_test_68(input_dir ):
     # process 68 landmarks dataset with .pts files
     input_path = Path(input_dir)
     if not input_path.exists():
-        raise ValueError('input_dir 未找到，请确保它存在.')
+        raise ValueError('input_dir not found, make sure it exists.')
 
     output_path = input_path.parent / (input_path.name+'_aligned')
 
-    io.log_info(f'输出目录为 % {output_path}')
+    io.log_info(f'The output directory is % {output_path}')
 
     if output_path.exists():
         output_images_paths = pathex.get_image_paths(output_path)
         if len(output_images_paths) > 0:
-            io.input_bool("警告 !!! \n %s 包含文件! \n 它们将被删除. \n 按回车键enter继续." % (str(output_path)), False )
+            io.input_bool("Warning !!! \n %s contains files! \n They will be deleted. \n Press enter to continue." % (str(output_path)), False )
             for filename in output_images_paths:
                 Path(filename).unlink()
     else:
@@ -274,7 +274,7 @@ def dev_test_68(input_dir ):
                 img = imagelib.normalize_channels(img, 3)
                 cv2_imwrite(output_filepath, img, [int(cv2.IMWRITE_JPEG_QUALITY), 95] )
                 
-                raise Exception("未执行")
+                raise Exception("under implementation")
                 #DFLJPG.x(output_filepath, face_type=FaceType.toString(FaceType.MARK_ONLY),
                 #                                landmarks=lmrks,
                 #                                source_filename=filepath.name,
@@ -282,7 +282,7 @@ def dev_test_68(input_dir ):
                 #                                source_landmarks=lmrks
                 #                    )
 
-    io.log_info("完成.")
+    io.log_info("Completion.")
 
 #unused in end user workflow
 def extract_umd_csv(input_file_csv,
@@ -296,17 +296,17 @@ def extract_umd_csv(input_file_csv,
 
     input_file_csv_path = Path(input_file_csv)
     if not input_file_csv_path.exists():
-        raise ValueError('input_file_csv 未找到，请确保它存在.')
+        raise ValueError('input_file_csv was not found, make sure it exists.')
 
     input_file_csv_root_path = input_file_csv_path.parent
     output_path = input_file_csv_path.parent / ('aligned_' + input_file_csv_path.name)
 
-    io.log_info("输出目录为 %s." % (str(output_path)) )
+    io.log_info("The output directory is %s." % (str(output_path)) )
 
     if output_path.exists():
         output_images_paths = pathex.get_image_paths(output_path)
         if len(output_images_paths) > 0:
-            io.input_bool("警告 !!! \n %s 包含文件! \n 它们将被删除. \n 按回车键继续." % (str(output_path)), False )
+            io.input_bool("Warning !!! \n %s contains files! \n They will be deleted. \n Press enter to continue." % (str(output_path)), False )
             for filename in output_images_paths:
                 Path(filename).unlink()
     else:
@@ -316,7 +316,7 @@ def extract_umd_csv(input_file_csv,
         with open( str(input_file_csv_path), 'r') as f:
             csv_file = f.read()
     except Exception as e:
-        io.log_err("无法打开或读取文件 " + str(input_file_csv_path) + ": " + str(e) )
+        io.log_err("Unable to open or read files " + str(input_file_csv_path) + ": " + str(e) )
         return
 
     strings = csv_file.split('\n')
@@ -326,7 +326,7 @@ def extract_umd_csv(input_file_csv,
     for i in range(1, len(strings)):
         values = strings[i].split(',')
         if keys_len != len(values):
-            io.log_err("CSV 文件中的字符串错误，跳过.")
+            io.log_err("String error in CSV file, skip.")
             continue
 
         csv_data += [ { keys[n] : values[n] for n in range(keys_len) } ]
@@ -343,17 +343,17 @@ def extract_umd_csv(input_file_csv,
     images_found = len(data)
     faces_detected = 0
     if len(data) > 0:
-        io.log_info ("从 CSV 文件执行第二遍处理...")
+        io.log_info ("Perform a second pass from the CSV file...")
         data = ExtractSubprocessor (data, 'landmarks', multi_gpu=multi_gpu, cpu_only=cpu_only).run()
 
-        io.log_info ('执行第三遍处理...')
+        io.log_info ('Perform the third processing...')
         data = ExtractSubprocessor (data, 'final', face_type, None, multi_gpu=multi_gpu, cpu_only=cpu_only, manual=False, final_output_path=output_path).run()
         faces_detected += sum([d.faces_detected for d in data])
 
 
     io.log_info ('-------------------------')
-    io.log_info ('找到的图像数:        %d' % (images_found) )
-    io.log_info ('检测到的人脸数:      %d' % (faces_detected) )
+    io.log_info ('Number of images found:        %d' % (images_found) )
+    io.log_info ('Number of detected faces:      %d' % (faces_detected) )
     io.log_info ('-------------------------')
 
 
@@ -367,19 +367,19 @@ def dev_test1(input_dir):
     input_path = Path(input_dir)
     images_path = input_path / 'images'    
     if not images_path.exists:
-        raise ValueError('LaPa dataset: 未找到图像文件夹.')
+        raise ValueError('LaPa dataset: Image folder not found.')
     labels_path = input_path / 'labels'    
     if not labels_path.exists:
-        raise ValueError('LaPa dataset: 未找到标签文件夹.')
+        raise ValueError('LaPa dataset: Label folder not found.')
     landmarks_path = input_path / 'landmarks'    
     if not landmarks_path.exists:
-        raise ValueError('LaPa dataset: 未找到关键点文件夹.')
+        raise ValueError('LaPa dataset: Key point folder not found.')
     
     output_path = input_path / 'out'    
     if output_path.exists():
         output_images_paths = pathex.get_image_paths(output_path)
         if len(output_images_paths) != 0:
-            io.input(f"\n 警告  !!! \n {output_path} 包含文件! \n 它们将被删除. \n 按Enter继续.\n")
+            io.input(f"\n Warning !!! \n {output_path} contains files! \n They will be deleted. \n Press Enter to continue. \n Press Enter to continue.")
             for filename in output_images_paths:
                 Path(filename).unlink()
     output_path.mkdir(parents=True, exist_ok=True)
@@ -392,14 +392,14 @@ def dev_test1(input_dir):
 
         landmark_filepath = landmarks_path / (filepath.stem + '.txt')
         if not landmark_filepath.exists():
-            raise ValueError(f'{filepath}的关键点不存在')
+            raise ValueError(f'The keypoint for {filepath} does not exist')
         
         #img = cv2_imread(filepath)
         
         lm = landmark_filepath.read_text()
         lm = lm.split('\n')
         if int(lm[0]) != 106:
-            raise ValueError(f'{landmark_filepath}中的关键点格式错误')
+            raise ValueError(f'Keypoint formatting error in {landmark_filepath}')
         
         lmrks = []
         for i in range(106):
@@ -429,9 +429,9 @@ def dev_test1(input_dir):
     if len(data) > 0:
         device_config = nn.DeviceConfig.BestGPU()
         
-        io.log_info ("执行第二遍处理...")
+        io.log_info ("Perform second processing...")
         data = ExtractSubprocessor (data, 'landmarks', image_size, 95, face_type,  device_config=device_config).run()
-        io.log_info ("执行第三遍处理...")
+        io.log_info ("Perform third pass processing...")
         data = ExtractSubprocessor (data, 'final', image_size, 95, face_type, final_output_path=output_path, device_config=device_config).run()
 
 
@@ -497,7 +497,7 @@ def dev_segmented_trash(input_dir):
         try:
             filepath.rename ( output_path / filepath.name )
         except:
-            io.log_info ('无法删除 %s' % (src.name) )
+            io.log_info ('cannot be deleted %s' % (src.name) )
 
 
 
@@ -539,7 +539,7 @@ def dev_test(input_dir):
     if output_path.exists():
         output_images_paths = pathex.get_image_paths(output_path)
         if len(output_images_paths) != 0:
-            io.input(f"\n 警告 !!! \n {output_path} 包含文件! \n 它们将被删除. \n 按回车键继续.\n")
+            io.input(f"\n Warning !!! \n {output_path} contains files! \n They will be deleted. \n Press enter to continue. \n")
             for filename in output_images_paths:
                 Path(filename).unlink()
     output_path.mkdir(parents=True, exist_ok=True)
@@ -551,7 +551,7 @@ def dev_test(input_dir):
             
             image_filepath = filepath.parent / f'{filepath.name.split("_")[0]}.png'
             if not image_filepath.exists():
-                print(f'{image_filepath} 不存在，跳过') 
+                print(f'{image_filepath} does not exist, skip it') 
                 
             lmrks = []
             for lmrk_line in filepath.read_text().split('\n'):
@@ -568,7 +568,7 @@ def dev_test(input_dir):
             data += [ ExtractSubprocessor.Data(filepath=image_filepath, rects=[rect], landmarks=[ lmrks ] ) ]
 
     if len(data) > 0:
-        io.log_info ("执行第三遍处理...")
+        io.log_info ("Perform third pass processing...")
         data = ExtractSubprocessor (data, 'final', image_size, 95, face_type, final_output_path=output_path, device_config=nn.DeviceConfig.CPU()).run()
 
         for filename in io.progress_bar_generator(pathex.get_image_paths (output_path), "Processing"):
@@ -581,7 +581,7 @@ def dev_test(input_dir):
             
             seg_filepath = input_path / ( Path(src_filename).stem + '_seg.png')        
             if not seg_filepath.exists():
-                raise ValueError(f'{seg_filepath} 不存在')
+                raise ValueError(f'{seg_filepath} non-existent')
             
             seg = cv2_imread(seg_filepath)     
             seg_inds = np.isin(seg, [1,2,3,4,5,6,9,10,11]) 

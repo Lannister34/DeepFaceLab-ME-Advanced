@@ -20,8 +20,8 @@ COLAB_TRAIN_STOPPER_FILENAME = 'stopper.txt'
 
 class GlobalMeanLoss:
     def __init__(self):
-        self.src = "未记录"
-        self.dst = "未记录"
+        self.src = "unrecorded"
+        self.dst = "unrecorded"
         
 # adapted from https://stackoverflow.com/a/52295534
 class TensorBoardTool:
@@ -37,6 +37,7 @@ class TensorBoardTool:
         # Start tensorboard server
         tb = program.TensorBoard(default.get_plugins())
         tb_argv = [None, '--logdir', self.dir_path, '--host', '0.0.0.0', '--port', '6006']
+        #tb_argv = [None, '--logdir', self.dir_path,'--port', '6006']
 
         #if int(tb_version.VERSION[0])>=2:
             #tb_argv.append("--bind_all")
@@ -139,7 +140,7 @@ def trainerThread (s2c, c2s, e,
 
             def model_save():
                 if not debug and not is_reached_goal:
-                    io.log_info("保存中....", end='\r')
+                    io.log_info("Saved....", end='\r')
                     model.save()
                     shared_state['after_save'] = True
 
@@ -195,40 +196,40 @@ def trainerThread (s2c, c2s, e,
                 
             if model.get_target_iter() != 0:
                 if is_reached_goal:
-                    io.log_info('模型已经训练到目标迭代。您可以使用预览功能.')
+                    io.log_info('The model has been trained to the target iteration. You can use the preview function .')
                 else:
-                    io.log_info('开始运行中. 目标迭代: %d. 按下 Enter 停止训练并保存模型.' % (
+                    io.log_info('Starting to run. Target iteration: %d. Press Enter to stop training and save the model..' % (
                         model.get_target_iter()))
             else:
                 io.log_info('')
-                io.log_info('启动中.....')
-                io.log_info('按 Enter 停止训练并保存进度')
-                io.log_info('按 Space 可以切换视图')
-                io.log_info('按 P 可以刷新预览图')
-                io.log_info('按 S 可以保存训练进度')
+                io.log_info('activation.....')
+                io.log_info('Press Enter to stop training and save progress')
+                io.log_info('Press Space to switch views')
+                io.log_info('Press P to refresh the preview image')
+                io.log_info('Press S to save the training progress')
                 io.log_info('')
  
 
                 if flask_preview == True:
-                    io.log_info('请在浏览器进入：127.0.0.1:6006')
-                    io.log_info('若是在服务器训练，可远程访问！')
+                    io.log_info('Please enter in your browser: 127.0.0.1:6006')
+                    io.log_info('If trained on a server, it can be accessed remotely!')
                     io.log_info('')
                     url ='http://127.0.0.1:6006/'
                     thread_browser = threading.Timer(15, open_browser, args=[url])
                     thread_browser.start()
                     if start_tensorboard == True:
-                        io.log_info('抱歉！两种WEBUI无法同时启用！实时WEB预览优先')       
+                        io.log_info('Sorry! Both WEBUIs cannot be enabled at the same time! Live WEB preview is preferred')       
                         io.log_info('')
                 elif start_tensorboard == True:
-                    io.log_info('（30秒后自动打开）或在浏览器进入：127.0.0.1:6006')
-                    io.log_info('请不要打开右上方的下拉菜单，只需使用左上方的三个面板！')
-                    io.log_info('首次开启WEB面板，或者刚删过log数据，需要训练五分钟以上，保存数据后才会显示训练内容')
+                    io.log_info('(Automatically opens after 30 seconds) or in your browser go to: 127.0.0.1:6006')
+                    io.log_info('Please do not open the drop down menu in the top right, just use the three panels in the top left!')
+                    io.log_info('The first time you open the WEB panel, or just deleted the log data, you need to train for more than five minutes and save the data before the training content will be displayed')
                     io.log_info('')
                     url ='http://127.0.0.1:6006/?darkMode=true#timeseries'
                     thread_browser = threading.Timer(30, open_browser, args=[url])
                     thread_browser.start()       
                     
-                io.log_info('[保存时间][迭代次数][单次迭代][SRC损失][DST损失]')
+                io.log_info('[save time][number of iterations][single time][SRC loss][DST loss]')
 
 
                 
@@ -255,15 +256,15 @@ def trainerThread (s2c, c2s, e,
                             try:
                                 exec(prog)
                             except Exception as e:
-                                print("无法执行程序: %s" % prog)
+                                print("Failure to execute a program: %s" % prog)
 
                     if not is_reached_goal:
 
                         if model.is_first_run():
                             io.log_info(
-                                "尝试进行第一次迭代。如果发生错误，请减少模型参数.")
+                                "Try to perform the first iteration. If an error occurs, reduce the model parameters .")
                             if sys.platform[0:3] == 'win':
-                                io.log_info("按下Enter键可停止训练并保存模型.")
+                                io.log_info("Press Enter to stop training and save the model.")
 
                         if gen_snapshot:
                             model.generate_training_state()
@@ -315,10 +316,10 @@ def trainerThread (s2c, c2s, e,
                         #     model.generate_training_state()
 
                         if model.get_target_iter() != 0 and model.is_reached_iter_goal():
-                            io.log_info('达到目标迭代.')
+                            io.log_info('Reach Target Iteration.')
                             model_save()
                             is_reached_goal = True
-                            io.log_info('可以开始使用快捷键 P 刷新预览.')
+                            io.log_info('You can use preview now.')
 
                 if not is_reached_goal and (time.time() - last_preview_time) >= tensorboard_preview_interval_min*60:
                     last_preview_time += tensorboard_preview_interval_min*60
@@ -333,7 +334,7 @@ def trainerThread (s2c, c2s, e,
 
                 if io.is_colab():
                     if read_stopping_file():
-                        io.log_info('由于停止文件，停止训练!')
+                        io.log_info('Stopped training due to stoppage of files!')
                         write_stopping_file('false')
                         s2c.put({'op': 'close'})
 
@@ -374,17 +375,17 @@ def trainerThread (s2c, c2s, e,
 
 _train_summary_writer = None
 
-def cv_set_titile(oldTitle,newTitle='神农',oneRun=False):
+def cv_set_titile(oldTitle,newTitle='Crucified Midget',oneRun=False):
     """
-    设置窗口标题
-    :param oldTitle: 旧标题
-    :param newTitle: 新标题
-    :param oneRun: 是否只运行一次
+    Setting the window title
+    :param oldTitle: old title
+    :param newTitle: new title
+    :param oneRun: Whether to run it only once
     :return:
     """
     if oneRun == False:
-        # 根据窗口名称查找其句柄 然后使用函数修改其标题
-        # 尽量选择一个不常见的英文名 防止误该已有#的窗口标题 初始化时通常取无意义的名字  比如这里取‘aa’
+        # Find the handle of a window by its name and use the function to change its title.
+        # Try to choose an uncommon English name to prevent mistaking the title of an existing # window Initialization is usually done with a meaningless name, like 'aa' here.
         handle = win32gui.FindWindow(0, oldTitle)
         win32gui.SetWindowText(handle, newTitle)
         oneRun= True
@@ -508,10 +509,10 @@ def create_preview_pane_image(previews, selected_preview, loss_history,
 
     # HEAD
     head_lines = [
-        '[s]:保存 save          [b]:备份 backup          [enter]:退出 exit',
-        '[p]:刷新预览 update    [space]:切换预览模式 next preview',
-        '[l]:loss range         [-/+]:缩放 zoom: %s' % zoom.label,
-        '当前预览模式 Preview: "%s" [%d/%d]' % (selected_preview_name,selected_preview+1, len(previews) )
+        '[s]:save          [b]:backup          [enter]:exit',
+        '[p]:update    [space]:next preview',
+        '[l]:loss range         [-/+]:zoom: %s' % zoom.label,
+        'Preview: "%s" [%d/%d]' % (selected_preview_name,selected_preview+1, len(previews) )
         ]
 
     head_line_height = int(20 * zoom.scale)
@@ -540,7 +541,7 @@ def create_preview_pane_image(previews, selected_preview, loss_history,
 
 
 def main(**kwargs):
-    io.log_info("启动训练程序.\r\n")
+    io.log_info("Initiate the training program.\r\n")
 
     no_preview = kwargs.get('no_preview', False)
     
@@ -659,7 +660,7 @@ def main(**kwargs):
             except KeyboardInterrupt:
                 s2c.put({'op': 'close'})
     else:
-        wnd_name = "--- ShenNong SAEHD --- Training preview"
+        wnd_name = "Training preview"
         io.named_window(wnd_name)
         io.capture_keys(wnd_name)
 
@@ -709,30 +710,30 @@ def main(**kwargs):
 
             if update_preview:
                 update_preview = False
-                # 获取当前选择的预览名称和对应的RGB数据
+                # Get the name of the currently selected preview and the corresponding RGB data
                 selected_preview_name = previews[selected_preview][0]
                 selected_preview_rgb = previews[selected_preview][1]
-                # 获取预览图像的高度、宽度和通道数
+                # Get the height, width and number of channels of the preview image
                 (h,w,c) = selected_preview_rgb.shape
 
                 # HEAD
                 head_lines = [
-                    '[s]:保存 save                [b]:备份 backup                [enter]:退出 exit',
-                    '[p]:刷新预览 update          [space]:切换预览模式 next preview',
-                    '[l]:loss range               当前预览模式 Preview: "%s" [%d/%d]                单击图像也可刷新' % (selected_preview_name,selected_preview+1, len(previews) )
+                    '[s]:save                [b]:backup                [enter]:exit',
+                    '[p]:update          [space]:next preview',
+                    '[l]:loss range              Preview: "%s" [%d/%d]                ' % (selected_preview_name,selected_preview+1, len(previews) )
                     ]
                 
                 head_line_height = 15
                 head_height = len(head_lines) * head_line_height
-                head = np.ones ( (head_height,w,c) ) * 0.1# 创建头部区域的图像，初始为灰色背景
+                head = np.ones ( (head_height, w, c) ) * 0.1  # Create an image of the head area, initially with a gray background
 
                 for i in range(0, len(head_lines)):
                     t = i * head_line_height
                     b = (i + 1) * head_line_height
-                    # 将文本图像叠加到头部区域
-                    head[t:b, 0:w] += imagelib.get_text_image (  (head_line_height,w,c) , head_lines[i], color=[0.8]*c )
+                    # Overlay text image onto header area
+                    head[t:b, 0:w] += imagelib.get_text_image((head_line_height, w, c), head_lines[i], color=[0.8] * c)
 
-                final = head # 将头部区域作为最终的图像预览结果
+                final = head # Use the header area as the final image preview result
 
                 if loss_history is not None:
                     if show_last_history_iters_count == 0:

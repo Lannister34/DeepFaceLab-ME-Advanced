@@ -1,0 +1,15 @@
+@echo off
+chcp 936 > nul
+attrib -h "3)-----------[ Data_dst Tools ]------------------------------------------------------------------------------------------.bat"
+attrib +h "3)++++++++++++++++[ Data_dst Tools ]+++++++++++++++++++++++++++++++++++++++++++.bat"
+attrib +h "3.1)--- data_dst faceset extract + manual fix.bat"
+attrib +h "3.1)--- data_dst faceset extract MANUAL.bat"
+attrib +h "3.1)--- data_dst faceset extract.bat"
+attrib +h "3.1)--- data_dst faceset MANUAL RE-EXTRACT DELETED ALIGNED_DEBUG.bat"
+attrib +h "3.2)--- data_dst view aligned results.bat"
+attrib +h "3.3)--- data_dst add landmarks debug images.bat"
+attrib +h "3.3)--- data_dst util faceset resize.bat"
+attrib +h "3.4)--- data_dst sort.bat"
+attrib +h "3.5)--- data_dst util faceset pack.bat"
+attrib +h "3.5)--- data_dst util faceset unpack.bat"
+attrib +h "3.6)--- data_dst util recover original filename.bat"

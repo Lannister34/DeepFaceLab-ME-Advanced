@@ -1,3 +1,4 @@
+.idea/
 _internal/_e/
 _internal/CUDA/
 _internal/CUDNN/
@@ -9,4 +10,5 @@ _internal/pretrain_Quick224/
 _internal/pretrain_Quick512/
 _internal/python_common/
 _internal/XnViewMP/
+workspace/
 *.npy

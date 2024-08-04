@@ -7,44 +7,46 @@ class XSeg(nn.ModelBase):
     
     def on_build (self, in_ch, base_ch, out_ch, resolution):
         if resolution is None:
-            raise ValueError("请将XSeg原始模型用神农训练保存一次")
+            raise ValueError("Please save the original XSeg model once with Shennong training")
         self.scale_ch= resolution/256
         
-        # 定义一个卷积块
+        # Define a convolution block
         class ConvBlock(nn.ModelBase):
             def on_build(self, in_ch, out_ch):              
-                # 定义卷积层，输入通道数为in_ch，输出通道数为out_ch，卷积核大小为3x3，padding方式为SAME
+                # Define the convolutional layer with the number of input channels as in_ch, 
+                # the number of output channels as out_ch, the size of the convolutional kernel as 3x3, and the padding method as SAME
                 self.conv = nn.Conv2D(in_ch, out_ch, kernel_size=3, padding='SAME')
-                # 定义FRN（Filter Response Normalization）归一化层，对卷积输出进行归一化
+                # Define FRN (Filter Response Normalization) normalization layer to normalize convolutional outputs
                 self.frn = nn.FRNorm2D(out_ch)
-                # 定义TLU（Thresholded Linear Unit）激活函数层，对归一化后的输出进行激活
+                # Define TLU (Thresholded Linear Unit) activation function layer for normalized outputs
                 self.tlu = nn.TLU(out_ch)
 
             def forward(self, x):                
-                # 执行卷积操作
+                # Perform a convolution operation
                 x = self.conv(x)
-                # 对卷积输出进行FRN归一化
+                # FRN normalization of convolutional outputs
                 x = self.frn(x)
-                # 对归一化后的输出进行TLU激活
+                # TLU activation on normalized outputs
                 x = self.tlu(x)
                 return x
 
-        # 定义一个反卷积块
+        # Define an anti-convolution block
         class UpConvBlock(nn.ModelBase):
             def on_build(self, in_ch, out_ch):
-                # 定义反卷积层，输入通道数为in_ch，输出通道数为out_ch，卷积核大小为3x3，padding方式为SAME
+                # Define the inverse convolution layer with the number of input channels as in_ch, 
+                # the number of output channels as out_ch, the size of the convolution kernel as 3x3, and the padding method as SAME
                 self.conv = nn.Conv2DTranspose(in_ch, out_ch, kernel_size=3, padding='SAME')
-                # 定义FRN归一化层，对反卷积输出进行归一化
+                # Define FRN normalization layer to normalize the inverse convolution outputs
                 self.frn = nn.FRNorm2D(out_ch)
-                # 定义TLU激活函数层，对归一化后的反卷积输出进行激活
+                # Define a TLU activation function layer to activate the normalized inverse convolution outputs
                 self.tlu = nn.TLU(out_ch)
 
             def forward(self, x):
-                # 执行反卷积操作
+                # Perform a reverse convolution operation
                 x = self.conv(x)
-                # 对反卷积输出进行FRN归一化
+                # FRN normalization of the deconvolution outputs
                 x = self.frn(x)
-                # 对归一化后的反卷积输出进行TLU激活
+                # TLU activation on normalized deconvolution outputs
                 x = self.tlu(x)
                 return x
                 

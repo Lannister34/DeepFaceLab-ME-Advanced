@@ -29,6 +29,34 @@ from .QIconDB import QIconDB
 from .QStringDB import QStringDB
 from .QImageDB import QImageDB
 
+class DrawingArea(QWidget):
+    def __init__(self, pixmap):
+        super().__init__()
+        self.drawing = False
+        self.last_point = QPoint()
+        self.mask_pixmap = pixmap
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drawing = True
+            self.last_point = event.pos()
+
+    def mouseMoveEvent(self, event):
+        if (event.buttons() & Qt.LeftButton) and self.drawing:
+            painter = QPainter(self.mask_pixmap)
+            painter.setPen(QPen(Qt.black, 5))  # Modify the pen color/size as per requirement
+            painter.drawLine(self.last_point, event.pos())
+            self.last_point = event.pos()
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drawing = False
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(self.rect(), self.mask_pixmap)
+
 class OpMode(IntEnum):
     NONE = 0
     DRAW_PTS = 1
@@ -173,6 +201,11 @@ class QCanvasControlsLeftBar(QFrame):
         btn_poly_type_exclude.setDefaultAction(self.btn_poly_type_exclude_act)
         btn_poly_type_exclude.setIconSize(QUIConfig.icon_q_size)
 
+        btn_poly_from_xseg = QToolButton()
+        self.btn_poly_from_xseg_act = QActionEx( QIconDB.poly_from_xseg, QStringDB.btn_poly_from_xseg_tip, shortcut='G', shortcut_in_tooltip=True, is_checkable=True)
+        btn_poly_from_xseg.setDefaultAction(self.btn_poly_from_xseg_act)
+        btn_poly_from_xseg.setIconSize(QUIConfig.icon_q_size)
+
         self.btn_poly_type_act_grp = QActionGroup (self)
         self.btn_poly_type_act_grp.addAction(self.btn_poly_type_include_act)
         self.btn_poly_type_act_grp.addAction(self.btn_poly_type_exclude_act)
@@ -202,6 +235,7 @@ class QCanvasControlsLeftBar(QFrame):
         controls_bar_frame2_l = QVBoxLayout()
         controls_bar_frame2_l.addWidget ( btn_poly_type_include )
         controls_bar_frame2_l.addWidget ( btn_poly_type_exclude )
+        controls_bar_frame2_l.addWidget ( btn_poly_from_xseg )
         controls_bar_frame2 = QFrame()
         controls_bar_frame2.setFrameShape(QFrame.StyledPanel)
         controls_bar_frame2.setSizePolicy (QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -286,7 +320,7 @@ class QCanvasControlsRightBar(QFrame):
         controls_bar_frame2.setFrameShape(QFrame.StyledPanel)
         controls_bar_frame2.setSizePolicy (QSizePolicy.Fixed, QSizePolicy.Fixed)
         controls_bar_frame2.setLayout(controls_bar_frame2_l)
-        
+
         controls_bar_frame1_l = QVBoxLayout()
         controls_bar_frame1_l.addWidget ( btn_poly_color_red )
         controls_bar_frame1_l.addWidget ( btn_poly_color_green )
@@ -297,7 +331,7 @@ class QCanvasControlsRightBar(QFrame):
         controls_bar_frame1.setFrameShape(QFrame.StyledPanel)
         controls_bar_frame1.setSizePolicy (QSizePolicy.Fixed, QSizePolicy.Fixed)
         controls_bar_frame1.setLayout(controls_bar_frame1_l)
-        
+
         controls_bar_frame3_l = QVBoxLayout()
         controls_bar_frame3_l.addWidget ( btn_view_lock_center )
         controls_bar_frame3 = QFrame()
@@ -310,7 +344,7 @@ class QCanvasControlsRightBar(QFrame):
         controls_bar_l.addWidget(controls_bar_frame2)
         controls_bar_l.addWidget(controls_bar_frame1)
         controls_bar_l.addWidget(controls_bar_frame3)
-        
+
         self.setSizePolicy ( QSizePolicy.Fixed, QSizePolicy.Expanding )
         self.setLayout(controls_bar_l)
 
@@ -331,6 +365,7 @@ class QCanvasOperator(QWidget):
 
         self.cbar.btn_poly_type_include_act.triggered.connect ( lambda : self.set_poly_include_type(SegIEPolyType.INCLUDE) )
         self.cbar.btn_poly_type_exclude_act.triggered.connect ( lambda : self.set_poly_include_type(SegIEPolyType.EXCLUDE) )
+        self.cbar.btn_poly_from_xseg_act.triggered.connect ( lambda : self.generate_poly_from_xseg() )
 
         self.cbar.btn_undo_pt_act.triggered.connect ( lambda : self.action_undo_pt() )
         self.cbar.btn_redo_pt_act.triggered.connect ( lambda : self.action_redo_pt() )
@@ -353,6 +388,8 @@ class QCanvasOperator(QWidget):
         q_img = self.q_img = QImage_from_np(img)
         self.img_pixmap = QPixmap.fromImage(q_img)
 
+        self.image_size = img.shape[0]
+        self.xseg_mask = xseg_mask
         self.xseg_mask_pixmap = None
         self.xseg_overlay_mask_pixmap = None
         if xseg_mask is not None:
@@ -637,6 +674,10 @@ class QCanvasOperator(QWidget):
         self.cbar.btn_poly_type_include_act.setChecked(self.poly_include_type == SegIEPolyType.INCLUDE)
         self.cbar.btn_poly_type_exclude_act.setChecked(self.poly_include_type == SegIEPolyType.EXCLUDE)
 
+    def generate_poly_from_xseg(self):
+        if self.xseg_mask is not None:
+            self.ie_polys = SegIEPolys().load_from_xseg(self.xseg_mask, self.image_size)
+
     # ====================================================================================
     # ====================================================================================
     # ====================================== METHODS =====================================
@@ -798,6 +839,7 @@ class QCanvasOperator(QWidget):
 
         if btn == Qt.LeftButton:
             if self.op_mode == OpMode.NONE:
+                # Clicking in NO OPERATION mode
                 # Clicking in NO OPERATION mode
                 if self.mouse_wire_poly is not None:
                     # Click on wire on any poly -> switch to EDIT_MODE
@@ -1084,6 +1126,7 @@ class QCanvas(QFrame):
 
                    btn_poly_type_include_act = self.canvas_control_left_bar.btn_poly_type_include_act,
                    btn_poly_type_exclude_act = self.canvas_control_left_bar.btn_poly_type_exclude_act,
+                   btn_poly_from_xseg_act = self.canvas_control_left_bar.btn_poly_from_xseg_act,
                    btn_poly_type_act_grp = self.canvas_control_left_bar.btn_poly_type_act_grp,
                    btn_undo_pt_act = self.canvas_control_left_bar.btn_undo_pt_act,
                    btn_redo_pt_act = self.canvas_control_left_bar.btn_redo_pt_act,
@@ -1344,18 +1387,18 @@ class MainWindow(QXMainWindow):
 
         self.update_cached_images()
         self.update_preview_bar()
-        
+
     def trash_current_image(self):
         self.process_next_image()
-        
+
         img_path = self.image_paths_done.pop(-1)
         img_path = Path(img_path)
         self.trash_dirpath.mkdir(parents=True, exist_ok=True)
         img_path.rename( self.trash_dirpath / img_path.name )
-        
+
         self.update_cached_images()
         self.update_preview_bar()
-        
+
     def initialize_ui(self):
 
         self.canvas = QCanvas()
@@ -1372,7 +1415,7 @@ class MainWindow(QXMainWindow):
 
         btn_delete_image = QXIconButton(QIconDB.trashcan, QStringDB.btn_delete_image_tip, shortcut='X', click_func=self.trash_current_image)
         btn_delete_image.setIconSize(QUIConfig.preview_bar_icon_q_size)
-    
+
         pad_image = QWidget()
         pad_image.setFixedSize(QUIConfig.preview_bar_icon_q_size)
 
@@ -1382,7 +1425,7 @@ class MainWindow(QXMainWindow):
         self.spin_box.installEventFilter(self)
         self.spin_box.valueChanged.connect(self.on_spinbox_value_changed)
         self.spin_box.setToolTip(QStringDB.spinner_label_tip)
-        
+
         preview_image_bar_frame_l = QHBoxLayout()
         preview_image_bar_frame_l.setContentsMargins(0,0,0,0)
         preview_image_bar_frame_l.addWidget ( pad_image, alignment=Qt.AlignCenter)
@@ -1402,11 +1445,11 @@ class MainWindow(QXMainWindow):
         preview_image_bar_frame2 = QFrame()
         preview_image_bar_frame2.setSizePolicy ( QSizePolicy.Fixed, QSizePolicy.Fixed )
         preview_image_bar_frame2.setLayout(preview_image_bar_frame2_l)
-        
+
         preview_image_bar_l = QHBoxLayout()
         preview_image_bar_l.addWidget (preview_image_bar_frame, alignment=Qt.AlignCenter)
         preview_image_bar_l.addWidget (preview_image_bar_frame2)
-        
+
         preview_image_bar = QFrame()
         preview_image_bar.setFrameShape(QFrame.StyledPanel)
         preview_image_bar.setSizePolicy ( QSizePolicy.Expanding, QSizePolicy.Fixed )
@@ -1466,7 +1509,7 @@ class MainWindow(QXMainWindow):
         if event.type() == QEvent.MouseButtonPress and obj is self.spin_box:
             if event.button() == Qt.LeftButton and self.spin_box.hasFocus():
                 self.spin_box.clearFocus()
-                
+
         return super().eventFilter(obj, event)
 
     def on_spinbox_value_changed(self, value):
@@ -1490,10 +1533,10 @@ def start(input_dirpath):
     """
     returns exit_code
     """
-    io.log_info("正在运行 XSeg 编辑器.")
+    io.log_info("The XSeg editor is running.")
 
     if PackedFaceset.path_contains(input_dirpath):
-        io.log_info (f'\n{input_dirpath}  包含打包的人脸集！请先解压.\n')
+        io.log_info (f'\n{input_dirpath} contains packaged face sets! Please unzip it first.\n')
         return 1
 
     root_path = Path(__file__).parent

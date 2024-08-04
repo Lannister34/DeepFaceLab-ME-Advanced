@@ -1,25 +1,5 @@
 import shutil
 
-def print_community_info():
-
-
-    #print ('You are using Machine Video Editor community fork')
-
-    #print_discord_info()
-
-    #print_commercial_contact()
-
-    print_dontation_link()
-
-    print_recruitment_info()
-
-
-def print_discord_info():
-    print ('此版本是Machine Video Editor社区分支版本')
-
-def print_commercial_contact():
-    print ('此版本是Machine Video Editor社区分支版本')
-
     
 def print_logo():
     print("                           └╧╦┙┭  _ooOoo_  ┮┕╦╧┘              ")
@@ -40,13 +20,25 @@ def print_logo():
     print("    U⌒U￣￣∪⌒u      \\ \\ '-. \\_ __\\ /__ _/ .-' / /        `'-.____;     /'-.___.-'    ")
     print("-------------------------'-.___\\_____/___.-'____.-'---------------------------------------")
     print("                               `=---='                        ")
-    print("                                                        ")
-    print("          神农保佑                DeepFaceLab                    永不炸丹  ")
+    print("                                                              ")
+    print("                              DeepFaceLab                     ")
 
 
-def print_dontation_link():
-    print ('此版本是Machine Video Editor社区分支版本')
+def print_community_info():
+    # # Get the width of the terminal window
+    # terminal_width, _ = shutil.get_terminal_size()
 
-def print_recruitment_info():
-    print ('由神农氏编辑汉化！QQ群：747439134')
+    # # print line
+    # print("-" * terminal_width)
+    # print ('')
+    # print_logo()
+    # print ('')
+    # print("-" * terminal_width)
 
+    # print('This is a community branch version of Machine Video Editor')
+
+    # print('Edited and localized by Shenong! QQ群: 747439134')
+    # print('Edited and localized some more by CrucifiedMidget! Discord: crucifiedmidget')
+    print('https://discord.gg/njSKPUQtFa')
+
+    # print("-" * terminal_width)

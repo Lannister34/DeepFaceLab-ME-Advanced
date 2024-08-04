@@ -1,0 +1,8 @@
+__pycache__/
+.idea/
+!*.md
+!*.txt
+!*.jpg
+!requirements*
+!Dockerfile*
+!*.sh

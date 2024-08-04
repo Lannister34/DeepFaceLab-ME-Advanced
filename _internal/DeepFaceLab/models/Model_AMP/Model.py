@@ -113,8 +113,8 @@ class AMPModel(ModelBase):
                 self.ask_autobackup_hour()
                 self.ask_maximum_n_backups()
                 self.ask_write_preview_history()
-                self.options['preview_samples'] = np.clip ( io.input_int ("预览样本数量", default_preview_samples, add_info="1 - 16", help_message="典型的精细值为4"), 1, 16 )
-                self.options['force_full_preview'] = io.input_bool ("使用旧的预览面板", default_full_preview)
+                self.options['preview_samples'] = np.clip ( io.input_int ("Preview sample size", default_preview_samples, add_info="1 - 16", help_message="Typical fine values are 4"), 1, 16 )
+                self.options['force_full_preview'] = io.input_bool ("Using the old preview panel", default_full_preview)
 
 
                 self.ask_target_iter()
@@ -122,17 +122,17 @@ class AMPModel(ModelBase):
                 self.ask_random_src_flip()
                 self.ask_random_dst_flip()
                 self.ask_batch_size(8)
-                self.options['use_fp16'] = io.input_bool ("使用fp16", default_usefp16, help_message='提高训练/推理速度，缩小模型大小。模型可能会崩溃。1-5k 迭代次数后启用.')
-                self.options['cpu_cap'] = np.clip ( io.input_int ("最大使用的 CPU 核心数.", default_cpu_cap, add_info="1 - 256", help_message="典型的精细值为 8"), 1, 256 )
+                self.options['use_fp16'] = io.input_bool ("Using fp16", default_usefp16, help_message='Increase training/inference speed and reduce model size. Model may crash. enabled after 1-5k iterations.')
+                self.options['cpu_cap'] = np.clip ( io.input_int ("Maximum number of CPU cores used.", default_cpu_cap, add_info="1 - 256", help_message="Typical fine values are 8"), 1, 256 )
 
 
 
         if self.is_first_run():
             if (self.read_from_conf and not self.config_file_exists) or not self.read_from_conf:
-                resolution = io.input_int("分辨率 Resolution", default_resolution, add_info="64-640", help_message="更高的分辨率需要更多的 VRAM 和训练时间。该值将调整为 16 和 32 的倍数，以适应不同的架构.")
+                resolution = io.input_int("Resolution", default_resolution, add_info="64-640", help_message="Higher resolutions require more VRAM and training time. This value will be adjusted to multiples of 16 and 32 to accommodate different architectures.")
                 resolution = np.clip ( (resolution // 32) * 32, 64, 640)
                 self.options['resolution'] = resolution
-                self.options['face_type'] = io.input_str ("人脸类型 Face type", default_face_type, ['h','mf','f','wf','head', 'custom'], help_message="Half / mid face / full face / whole face / head / custom. 半脸/中脸/全脸/全脸/头部/自定义。半脸的分辨率较高，但覆盖脸颊的面积较小。中脸比半脸宽 30%。全脸 包括前额在内的整个脸部。头部覆盖整个头部，但需要 XSeg 来获取源和目的面部集.").lower()
+                self.options['face_type'] = io.input_str ("Face type", default_face_type, ['h','mf','f','wf','head', 'custom'], help_message="Half / mid face / full face / whole face / head / custom. Half face has higher resolution, but covers a smaller area of the cheeks. The center face is 30% wider than the half face. Full Face The entire face including the forehead. Head covers the whole head but requires XSeg to get the source and destination face sets.").lower()
 
 
 
@@ -144,40 +144,40 @@ class AMPModel(ModelBase):
 
         if self.is_first_run():
             if (self.read_from_conf and not self.config_file_exists) or not self.read_from_conf:
-                self.options['ae_dims']    = np.clip ( io.input_int("自动编码器尺寸 AutoEncoder dimensions", default_ae_dims, add_info="32-1024", help_message="所有面部信息将被打包到 AE 维度中。如果 AE 维度的数量不足，例如闭眼可能无法被识别。维度越多越好，但需要更多的显存。您可以微调模型大小以适应您的 GPU" ), 32, 1024 )
-                self.options['inter_dims'] = np.clip ( io.input_int("内部维度 Inter dimensions", default_inter_dims, add_info="32-2048", help_message="应等于或大于自动编码器尺寸。尺寸越大越好，但需要更多的 VRAM。您可以微调模型尺寸以适应您的 GPU." ), 32, 2048 )
+                self.options['ae_dims']    = np.clip ( io.input_int("AutoEncoder dimensions", default_ae_dims, add_info="32-1024", help_message="All facial information will be packed into AE dimensions. If there are not enough AE dimensions, for example, closed eyes may not be recognized. More dimensions are better, but require more video memory. You can fine-tune the model size to fit your GPU!" ), 32, 1024 )
+                self.options['inter_dims'] = np.clip ( io.input_int("Inter dimensions", default_inter_dims, add_info="32-2048", help_message="It should be equal to or larger than the autoencoder size. Larger sizes are better, but require more VRAM. you can fine-tune the model size to fit your GPU." ), 32, 2048 )
 
-                e_dims = np.clip ( io.input_int("编码器尺寸 Encoder dimensions", default_e_dims, add_info="16-256", help_message="更多的维度有助于识别更多的面部特征并获得更清晰的效果，但需要更多的 VRAM。您可以微调模型大小以适应您的 GPU." ), 16, 256 )
+                e_dims = np.clip ( io.input_int("Encoder dimensions", default_e_dims, add_info="16-256", help_message="More dimensions help to recognize more facial features and get sharper results, but require more VRAM. you can fine-tune the model size to fit your GPU." ), 16, 256 )
                 self.options['e_dims'] = e_dims + e_dims % 2
 
-                d_dims = np.clip ( io.input_int("解码器尺寸 Decoder dimensions", default_d_dims, add_info="16-256", help_message="更多的维度有助于识别更多的面部特征并获得更清晰的效果，但需要更多的 VRAM。您可以微调模型大小以适应您的 GPU." ), 16, 256 )
+                d_dims = np.clip ( io.input_int("Decoder dimensions", default_d_dims, add_info="16-256", help_message="More dimensions help to recognize more facial features and get sharper results, but require more VRAM. you can fine-tune the model size to fit your GPU." ), 16, 256 )
                 self.options['d_dims'] = d_dims + d_dims % 2
 
-                d_mask_dims = np.clip ( io.input_int("解码器掩码尺寸 Decoder mask dimensions", default_d_mask_dims, add_info="16-256", help_message="典型的掩码尺寸 = 解码器尺寸 / 3。 如果手动从 dst 掩码中剪除障碍物，可以增加该参数以获得更好的质量" ), 16, 256 )
+                d_mask_dims = np.clip ( io.input_int("Decoder mask dimensions", default_d_mask_dims, add_info="16-256", help_message="Typical mask size = decoder size / 3. This parameter can be increased for better quality if obstacles are manually clipped from dst masks" ), 16, 256 )
                 self.options['d_mask_dims'] = d_mask_dims + d_mask_dims % 2
 
         if self.is_first_run() or ask_override:
             if (self.read_from_conf and not self.config_file_exists) or not self.read_from_conf:
-                morph_factor = np.clip ( io.input_number ("变形因子 Morph factor.", default_morph_factor, add_info="0.1 .. 0.5", help_message="典型的精细值为 0.5"), 0.1, 0.5 )
+                morph_factor = np.clip ( io.input_number ("Morph factor.", default_morph_factor, add_info="0.1 .. 0.5", help_message="Typical fine values are 0.5"), 0.1, 0.5 )
                 self.options['morph_factor'] = morph_factor
 
-                preview_mf = io.input_number ("预览变形因子 Preview morph factor.", default_preview_mf, add_info="0.25 | 0.50 | 0.65 | 0.75 | 1", valid_list=[0.25, 0.50, 0.65, 0.75, 1], help_message="预览中最后一列的变形因子1/3")
+                preview_mf = io.input_number ("Preview morph factor.", default_preview_mf, add_info="0.25 | 0.50 | 0.65 | 0.75 | 1", valid_list=[0.25, 0.50, 0.65, 0.75, 1], help_message="Transformation factor 1/3 for the last column in the preview")
                 self.options['preview_mf'] = preview_mf
 
                 if self.options['face_type'] == 'wf' or self.options['face_type'] == 'head':
-                        self.options['masked_training']  = io.input_bool ("遮罩训练 Masked training", default_masked_training, help_message="此选项仅适用于wf或head类型。遮罩训练将训练区域剪辑为全脸遮罩或 XSeg 遮罩，这样网络就能正确地训练人脸")
+                        self.options['masked_training']  = io.input_bool ("Masked training", default_masked_training, help_message="This option is only available for wf or head types. Mask training clips the training region to a full face mask or XSeg mask so that the network can train the face correctly")
 
-                self.options['eyes_prio'] = io.input_bool ("眼睛优先 Eyes priority", default_eyes_prio, help_message='通过强制神经网络优先训练眼部，有助于在训练过程中修复眼睛问题，如外星人眼和错误的眼睛方向，特别是在高清架构上，在此之前/之后 https://i.imgur.com/YQHOuSR.jpg ')
-                self.options['mouth_prio'] = io.input_bool ("嘴巴优先 Mouth priority", default_mouth_prio, help_message='通过强制神经网络优先训练嘴部，类似于眼睛，有助于在训练过程中修复嘴巴问题')
+                self.options['eyes_prio'] = io.input_bool ("Eyes priority", default_eyes_prio, help_message='By forcing the neural network to prioritize eye training, it helps to fix eye problems such as alien eyes and wrong eye orientation during training, especially on HD architectures, before/after https://i.imgur.com/YQHOuSR.jpg')
+                self.options['mouth_prio'] = io.input_bool ("Mouth priority", default_mouth_prio, help_message='By forcing the neural network to prioritize the training of the mouth, similar to the eyes, it helps to fix the mouth problem during training')
 
-                self.options['uniform_yaw'] = io.input_bool ("侧脸优化 Uniform yaw distribution of samples", default_uniform_yaw, help_message='有助于修复由于人脸数据中的侧脸数量较少而导致的模糊问题')
+                self.options['uniform_yaw'] = io.input_bool ("Uniform yaw distribution of samples", default_uniform_yaw, help_message='Helps fix blurring due to low number of side faces in face data')
 
-                self.options['blur_out_mask'] = io.input_bool ("遮罩边缘模糊 Blur out mask", default_blur_out_mask, help_message='模糊训练样本中应用的脸部遮罩之外的附近区域。其结果是，脸部附近的背景被平滑化，在交换的脸部上不那么明显。需要在 src 和 dst 脸集中使用精确的 xseg 遮罩')
+                self.options['blur_out_mask'] = io.input_bool ("Blur out mask", default_blur_out_mask, help_message='Blurring the nearby regions beyond the face mask applied in the training samples. The result is that the background near the face is smoothed out and less visible on the swapped faces. Need to use exact xseg masks on src and dst facesets')
 
-                self.options['loss_function'] = io.input_str(f"损失函数 Loss function", default_loss_function, ['SSIM', 'MS-SSIM', 'MS-SSIM+L1'], help_message="用于图像质量评估的变化损失函数")
-                self.options['lr'] = np.clip (io.input_number("学习率 Learning rate", default_lr, add_info="0.0 .. 1.0", help_message="学习率：典型精细值 5e-5"), 0.0, 1)
+                self.options['loss_function'] = io.input_str(f"Loss function", default_loss_function, ['SSIM', 'MS-SSIM', 'MS-SSIM+L1'], help_message="Variation loss function for image quality assessment")
+                self.options['lr'] = np.clip (io.input_number("Learning rate", default_lr, add_info="0.0 .. 1.0", help_message="Learning rate: typical fine values 5e-5"), 0.0, 1)
 
-                self.options['lr_dropout']  = io.input_str (f"使用学习率下降 Use learning rate dropout", default_lr_dropout, ['n','y','cpu'], help_message="当人脸训练得足够好时，可以启用该选项来获得额外的清晰度，并减少子像素抖动，从而减少迭代次数。在 禁用随机扭曲 和 GAN 之前启用。在 CPU 上启用。这样就可以不使用额外的 VRAM，牺牲 20% 的迭代时间")
+                self.options['lr_dropout']  = io.input_str (f"Use learning rate dropout", default_lr_dropout, ['n','y','cpu'], help_message="When the face is trained well enough, this option can be enabled to get extra sharpness and reduce sub-pixel jitter, thus reducing the number of iterations. Enable before disabling random warping and GAN. Enable on the CPU. This allows you to sacrifice 20% of the iteration time by not using extra VRAM")
 
         default_gan_power          = self.options['gan_power']          = self.load_or_def_option('gan_power', 0.0)
         default_gan_patch_size     = self.options['gan_patch_size']     = self.load_or_def_option('gan_patch_size', self.options['resolution'] // 8)
@@ -187,40 +187,40 @@ class AMPModel(ModelBase):
 
         if self.is_first_run() or ask_override:
             if (self.read_from_conf and not self.config_file_exists) or not self.read_from_conf:
-                self.options['models_opt_on_gpu'] = io.input_bool ("将模型和优化器放到GPU上 Place models and optimizer on GPU", default_models_opt_on_gpu, help_message="在一个 GPU 上进行训练时，默认情况下模型和优化器权重会放在 GPU 上，以加速训练过程。您可以将它们放在 CPU 上，以释放额外的 VRAM，从而设置更大的维度.")
+                self.options['models_opt_on_gpu'] = io.input_bool ("Place models and optimizer on GPU", default_models_opt_on_gpu, help_message="When training on one GPU, by default the model and optimizer weights are placed on the GPU to speed up the training process. You can place them on the CPU to free up additional VRAM to set larger dimensions.")
 
-                self.options['adabelief'] = io.input_bool ("使用AdaBelief优化器 Use AdaBelief optimizer?", default_adabelief, help_message="使用 AdaBelief 优化器。它需要更多的 VRAM，但模型的准确性和泛化程度更高.")
+                self.options['adabelief'] = io.input_bool ("Use AdaBelief optimizer?", default_adabelief, help_message="Use the AdaBelief optimizer. It requires more VRAM, but the model is more accurate and generalized.")
 
-                self.options['random_warp'] = io.input_bool ("启用样本随机扭曲 Enable random warp of samples", default_random_warp, help_message="要概括两张人脸的面部表情，需要使用随机翘曲。当人脸训练得足够好时，可以禁用它来获得额外的清晰度，并减少亚像素抖动，从而减少迭代次数.")
-                self.options['random_downsample'] = io.input_bool("启用样本随机采样降低采样率 Enable random downsample of samples", default_random_downsample, help_message="通过缩小部分样本来挑战模型")
-                self.options['random_noise'] = io.input_bool("启用在样本中随机添加噪音 Enable random noise added to samples", default_random_noise, help_message="通过在某些样本中添加噪音来挑战模型")
-                self.options['random_blur'] = io.input_bool("启用对样本的随机模糊 Enable random blur of samples", default_random_blur, help_message="通过在某些样本中添加模糊效果来挑战模型")
-                self.options['random_jpeg'] = io.input_bool("启用随机压缩jpeg样本 Enable random jpeg compression of samples", default_random_jpeg, help_message="通过对某些样本应用 jpeg 压缩的质量降级来挑战模型")
-                #self.options['random_shadow'] = io.input_str('启用对样本的随机阴影和高光 Enable random shadows and highlights of samples', default_random_shadow, ['none','src','dst','all'], help_message="有助于在数据集中创建暗光区域。如果你的src数据集缺乏阴影/不同的光照情况；使用dst以帮助泛化；或者使用all以满足两者的需求")
-                self.options['random_hsv_power'] = np.clip ( io.input_number ("随机色调/饱和度/光强度 Random hue/saturation/light intensity", default_random_hsv_power, add_info="0.0 .. 0.3", help_message="随机色调/饱和度/光照强度仅应用于神经网络输入的src人脸集。稳定人脸交换过程中的色彩扰动。通过选择原始面孔集中最接近的面孔来降低色彩转换的质量。因此src人脸集必须足够多样化。典型的精细值为 0.05"), 0.0, 0.3 )
+                self.options['random_warp'] = io.input_bool ("Enable random warp of samples", default_random_warp, help_message="To generalize the facial expressions of two faces, you need to use random warping. When faces are trained well enough, it can be disabled to gain extra clarity and reduce sub-pixel jitter, thus reducing the number of iterations .")
+                self.options['random_downsample'] = io.input_bool("Enable random downsample of samples", default_random_downsample, help_message="Challenging the model by shrinking part of the sample")
+                self.options['random_noise'] = io.input_bool("Enable random noise added to samples", default_random_noise, help_message="Challenge the model by adding noise to some samples")
+                self.options['random_blur'] = io.input_bool("Enable random blur of samples", default_random_blur, help_message="Challenging the model by adding blurring effects to certain samples")
+                self.options['random_jpeg'] = io.input_bool("Enable random jpeg compression of samples", default_random_jpeg, help_message="Challenge the model by applying jpeg-compressed quality degradation to some samples")
+                #self.options['random_shadow'] = io.input_str('Enable random shadows and highlights of samples', default_random_shadow, ['none','src','dst','all'], help_message="Helps to create dark light areas in the dataset. If your src dataset lacks shadows/different light situations; use dst to help generalize; or use all for both!")
+                self.options['random_hsv_power'] = np.clip ( io.input_number ("Random hue/saturation/light intensity", default_random_hsv_power, add_info="0.0 .. 0.3", help_message="Random hue/saturation/light intensity is only applied to the src face set input by the neural network. Stabilizes color perturbations during face swapping. Reduce the quality of color conversion by selecting the closest faces in the original face set. Therefore the src face set must be sufficiently diverse. Typical refinement values are 0.05"), 0.0, 0.3 )
 
-                self.options['gan_power'] = np.clip ( io.input_number ("GAN强度 GAN power", default_gan_power, add_info="0.0 .. 5.0", help_message="以生成对抗方式训练网络。强制神经网络学习人脸的小细节。只有当人脸训练得足够好时才启用它，否则就不要禁用。典型值为 0.1"), 0.0, 5.0 )
+                self.options['gan_power'] = np.clip ( io.input_number ("GAN power", default_gan_power, add_info="0.0 .. 5.0", help_message="Train the network in a generative adversarial manner. Force the neural network to learn small details about faces. Enable it only if the face is trained well enough, otherwise don't disable it. Typical value is 0.1"), 0.0, 5.0 )
 
 
                 if self.options['gan_power'] != 0.0:
 
-                    gan_patch_size = np.clip ( io.input_int("GAN补丁大 GAN patch size", default_gan_patch_size, add_info="3-640", help_message="补丁大小越大，质量越高，需要的显存越多。即使在最低设置下，您也可以获得更清晰的边缘。典型的良好数值是分辨率除以8" ), 3, 640 )
+                    gan_patch_size = np.clip ( io.input_int("GAN patch size", default_gan_patch_size, add_info="3-640", help_message="The larger the patch size, the higher the quality and the more video memory required. You will get sharper edges even at the lowest settings. Typical good values are resolution divided by 8" ), 3, 640 )
                     self.options['gan_patch_size'] = gan_patch_size
 
-                    gan_dims = np.clip ( io.input_int("GAN维度 GAN dimensions", default_gan_dims, add_info="4-64", help_message="GAN 网络的尺寸。尺寸越大，所需的 VRAM 越多。即使在最低设置下，也能获得更清晰的边缘。典型的精细值为 16" ), 4, 64 )
+                    gan_dims = np.clip ( io.input_int("GAN dimensions", default_gan_dims, add_info="4-64", help_message="Size of the GAN network. The larger the size, the more VRAM is required. Sharper edges are obtained even at the lowest settings. Typical fine values are 16" ), 4, 64 )
                     self.options['gan_dims'] = gan_dims
 
-                    self.options['gan_smoothing'] = np.clip ( io.input_number("GAN标签平滑 GAN label smoothing", default_gan_smoothing, add_info="0 - 0.5", help_message="使用软标签，其值略微偏离 GAN 的 0/1，具有正则化效果"), 0, 0.5)
-                    self.options['gan_noise'] = np.clip ( io.input_number("GAN噪声标签 GAN noisy labels", default_gan_noise, add_info="0 - 0.5", help_message="用错误的标签标记某些图像，有助于防止塌陷"), 0, 0.5)
+                    self.options['gan_smoothing'] = np.clip ( io.input_number("GAN label smoothing", default_gan_smoothing, add_info="0 - 0.5", help_message="Regularization effect using soft labels whose values slightly deviate from 0/1 of the GAN"), 0, 0.5)
+                    self.options['gan_noise'] = np.clip ( io.input_number("GAN noisy labels", default_gan_noise, add_info="0 - 0.5", help_message="Labeling certain images with incorrect labels helps prevent collapse"), 0, 0.5)
 
 
-                self.options['background_power'] = np.clip ( io.input_number("背景强度 Background power", default_background_power, add_info="0.0..1.0", help_message="了解遮罩外的区域。有助于平滑遮罩边界附近的区域。可随时使用"), 0.0, 1.0 )
+                self.options['background_power'] = np.clip ( io.input_number("Background power", default_background_power, add_info="0.0..1.0", help_message="Understand the area outside the mask. Helps smooth out areas near the mask boundary. Ready to use"), 0.0, 1.0 )
 
 
-                self.options['ct_mode'] = io.input_str (f"色彩转换模式 Color transfer for src faceset", default_ct_mode, ['none','rct','lct','mkl','idt','sot', 'fs-aug', 'cc-aug'], help_message="改变靠近 dst 样本的 src 样本的颜色分布。尝试所有模式，找出最佳方案。FS aug 为 dst 和 sr 添加随机颜色")
-                self.options['random_color'] = io.input_bool ("随机颜色 Random color", default_random_color, help_message="在LAB色彩空间中，样本随机围绕 L 轴旋转，有助于训练泛化")
+                self.options['ct_mode'] = io.input_str (f"Color transfer for src faceset", default_ct_mode, ['none','rct','lct','mkl','idt','sot', 'fs-aug', 'cc-aug'], help_message="Change the color distribution of src samples close to dst samples. Try all modes to find the best solution. fs aug add random colors to dst and sr")
+                self.options['random_color'] = io.input_bool ("Random color", default_random_color, help_message="In LAB color space, the samples are randomly rotated around the L-axis, which helps to train the generalization")
 
-                self.options['clipgrad'] = io.input_bool ("启用梯度裁剪 Enable gradient clipping", default_clipgrad, help_message="梯度裁剪降低了模型崩溃的几率，但牺牲了训练速度.")
+                self.options['clipgrad'] = io.input_bool ("Enable gradient clipping", default_clipgrad, help_message="Gradient trimming reduces the chance of model crashes, but sacrifices training speed.")
 
         self.gan_model_changed = (default_gan_patch_size != self.options['gan_patch_size']) or (default_gan_dims != self.options['gan_dims'])
 
@@ -788,7 +788,7 @@ class AMPModel(ModelBase):
             self.AE_merge = AE_merge
 
         # Loading/initializing all models/optimizers weights
-        for model, filename in io.progress_bar_generator(self.model_filename_list, "初始化模型"):
+        for model, filename in io.progress_bar_generator(self.model_filename_list, "Initialization Model"):
             do_init = self.is_first_run()
             if self.is_training and gan_power != 0 and model == self.GAN:
                 if self.gan_model_changed:
@@ -893,7 +893,7 @@ class AMPModel(ModelBase):
     def export_dfm (self):
         output_path=self.get_strpath_storage_for_file('model.dfm')
 
-        io.log_info(f'导出 .dfm 到 {output_path}')
+        io.log_info(f'Export .dfm to {output_path}')
 
         tf = nn.tf
         with tf.device (nn.tf_default_device_name):
@@ -942,7 +942,7 @@ class AMPModel(ModelBase):
 
     #override
     def onSave(self):
-        for model, filename in io.progress_bar_generator(self.get_model_filename_list(), "保存中...", leave=False):
+        for model, filename in io.progress_bar_generator(self.get_model_filename_list(), "Saved...", leave=False):
             model.save_weights ( self.get_strpath_storage_for_file(filename) )
 
     #override
@@ -1175,7 +1175,7 @@ class AMPModel(ModelBase):
         with open(self.state_history_path / 'config.json', 'w') as outfile:
             json.dump(config_dict, outfile)
 
-        print ('完成')
+        print ('fulfillment')
 
         # save image loss data
         src_full_state_dict = {
@@ -1194,7 +1194,7 @@ class AMPModel(ModelBase):
         with open(idx_state_history_path / 'dst_state.json', 'w') as outfile:
             json.dump(dst_full_state_dict, outfile)
 
-        print ('完成')
+        print ('fulfillment')
 
     def _get_formatted_image(self, raw_output):
         formatted = np.clip( nn.to_data_format(raw_output,"NHWC", self.model_data_format), 0.0, 1.0)

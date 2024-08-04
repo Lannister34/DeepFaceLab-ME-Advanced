@@ -20,7 +20,7 @@ class XSegModel(ModelBase):
 
     # override
     def on_initialize_options(self):
-        ask_override = self.ask_override()  # 获取是否覆盖现有选项的标志
+        ask_override = self.ask_override()  # Get a flag for whether to override existing options
 
         min_res = 128
         max_res = 640
@@ -29,23 +29,23 @@ class XSegModel(ModelBase):
         )
         default_face_type = self.options["face_type"] = self.load_or_def_option(
             "face_type", "wf"
-        )  # 加载或设置默认的面部类型选项
+        )  # Load or set default face type options
         default_pretrain = self.options["pretrain"] = self.load_or_def_option(
             "pretrain", False
-        )  # 加载或设置默认的预训练选项
+        )  # Load or set default pre-training options
 
-        if self.is_first_run():  # 如果是第一次运行
+        if self.is_first_run():  # If this is the first time running
 
             print()
 
             self.ask_author_name()
 
-            # 获取训练分辨,为64整数倍
+            # Get the training resolution as a multiple of 64.
             resolution = io.input_int(
-                "分辨率 Resolution",
+                "Resolution",
                 default_resolution,
                 add_info="128-640",
-                help_message="更高的分辨率需要更多的 VRAM 和训练时间。该值将调整为64的倍数.",
+                help_message="Higher resolution requires more VRAM and training time. The value will be adjusted to a multiple of 64 .",
             )
             resolution = np.clip((resolution // 64) * 64, min_res, max_res)
             self.options["resolution"] = resolution
@@ -55,39 +55,39 @@ class XSegModel(ModelBase):
                 default_face_type,
                 ["h", "mf", "f", "wf", "head"],
                 help_message="Half / mid face / full face / whole face / head.",
-            ).lower()  # 让用户输入面部类型
+            ).lower()  # Let the user enter the face type
 
-        if self.is_first_run() or ask_override:  # 如果是第一次运行或需要覆盖选项
-            self.ask_batch_size(4, range=[2, 16])  # 设置批处理大小
+        if self.is_first_run() or ask_override:  # If this is the first run or if you need to override options
+            self.ask_batch_size(4, range=[2, 16])  # Setting the batch size
             self.options["pretrain"] = io.input_bool(
-                "启用预训练模式 Enable pretraining mode（请留意预训练文件夹，该模式与正训的算法是不同的）",
+                "Enable pretraining mode Enable pretraining mode (keep an eye on the pretraining folder, the algorithm for this mode is different from the main training)",
                 default_pretrain,
-            )  # 让用户选择是否启用预训练模式
+            )  # Let the user choose whether to enable pre-training mode
 
         if not self.is_exporting and (
             self.options["pretrain"] and self.get_pretraining_data_path() is None
-        ):  # 如果未在导出模式且启用了预训练但未设置预训练数据路径
-            raise Exception("pretraining_data_path 未定义")  # 抛出异常
+        ):  # If you are not in export mode and have enabled pre-training but have not set a pre-training data path
+            raise Exception("pretraining_data_path undefined")  # throw an exception
 
         self.pretrain_just_disabled = (
             default_pretrain == True and self.options["pretrain"] == False
-        )  # 检查预训练模式是否刚被禁用
+        )  # Check if pre-training mode has just been disabled
 
     # override
-    def on_initialize(self):  # 重写on_initialize方法
+    def on_initialize(self):  # Override the on_initialize method
 
-        device_config = nn.getCurrentDeviceConfig()  # 获取当前设备配置
+        device_config = nn.getCurrentDeviceConfig()  # Get current device configuration
         self.model_data_format = (
             "NCHW"
             if self.is_exporting
             or (len(device_config.devices) != 0 and not self.is_debug())
             else "NHWC"
-        )  # 设置模型数据格式
-        nn.initialize(data_format=self.model_data_format)  # 初始化神经网络库
-        tf = nn.tf  # 获取TensorFlow引用
+        )  # Setting the model data format
+        nn.initialize(data_format=self.model_data_format)  # Initialize the neural network library
+        tf = nn.tf  # Getting TensorFlow references
 
-        device_config = nn.getCurrentDeviceConfig()  # 重新获取当前设备配置
-        devices = device_config.devices  # 获取设备列表
+        device_config = nn.getCurrentDeviceConfig()  # Retrieve the current device configuration
+        devices = device_config.devices  # Get device list
         self.resolution = resolution = self.options["resolution"]
         self.face_type = {
             "h": FaceType.HALF,
@@ -102,34 +102,34 @@ class XSegModel(ModelBase):
             "/CPU:0" if place_model_on_cpu else nn.tf_default_device_name
         )
 
-        bgr_shape = nn.get4Dshape(resolution, resolution, 3)  # 获取BGR图像的形状
-        mask_shape = nn.get4Dshape(resolution, resolution, 1)  # 获取掩码图像的形状
+        bgr_shape = nn.get4Dshape(resolution, resolution, 3)  # Get the shape of the BGR image
+        mask_shape = nn.get4Dshape(resolution, resolution, 1)  # Get the shape of the mask image
 
-        # 初始化模型类
+        # Initialize the model class
         self.model = XSegNet(
             name=self.model_name,
             resolution=resolution,
-            load_weights=not self.is_first_run(),  # 如果不是第一次运行，则加载权重
-            weights_file_root=self.get_model_root_path(),  # 权重文件的根目录
+            load_weights=not self.is_first_run(),  # Load weights if it is not the first run
+            weights_file_root=self.get_model_root_path(),  # Root directory of the weights file
             training=True,
-            place_model_on_cpu=place_model_on_cpu,  # 根据是否放置模型在CPU上
-            optimizer=nn.RMSprop(lr=0.0001, lr_dropout=0.3, name="opt"),  # 设置优化器
+            place_model_on_cpu=place_model_on_cpu,  # Depending on whether the model is placed on the CPU
+            optimizer=nn.RMSprop(lr=0.0001, lr_dropout=0.3, name="opt"),  # Setting up the Optimizer
             data_format=nn.data_format,
-        )  # 数据格式
+        )  # data format
 
-        self.pretrain = self.options["pretrain"]  # 获取预训练选项
-        if self.pretrain_just_disabled:  # 如果刚刚禁用了预训练
-            self.set_iter(0)  # 重置迭代次数
+        self.pretrain = self.options["pretrain"]  # Get pre-training options
+        if self.pretrain_just_disabled:  # If pre-training has just been disabled
+            self.set_iter(0)  # Number of reset iterations
 
-        if self.is_training:  # 如果在训练模式
-            # 根据GPU数量调整批量大小
-            gpu_count = max(1, len(devices))  # 计算GPU数量
+        if self.is_training:  # If in training mode
+            # Adjust batch size based on number of GPUs
+            gpu_count = max(1, len(devices))  # Calculate the number of GPUs
             bs_per_gpu = max(
                 1, self.get_batch_size() // gpu_count
-            )  # 计算每个GPU的批量大小
-            self.set_batch_size(gpu_count * bs_per_gpu)  # 设置总批量大小
+            )  # Calculate the batch size for each GPU
+            self.set_batch_size(gpu_count * bs_per_gpu)  # Setting the total batch size
 
-            # 计算每个GPU的损失
+            # Calculate the loss per GPU
             gpu_pred_list = []
 
             gpu_losses = []
@@ -143,21 +143,21 @@ class XSegModel(ModelBase):
                 ):
                     with tf.device(
                         f"/CPU:0"
-                    ):  # 在CPU上分割数据，避免所有数据首先被传输到GPU
+                    ):  # Split the data on the CPU to avoid all data being transferred to the GPU first
                         batch_slice = slice(
                             gpu_id * bs_per_gpu, (gpu_id + 1) * bs_per_gpu
                         )
                         gpu_input_t = self.model.input_t[batch_slice, :, :, :]
                         gpu_target_t = self.model.target_t[batch_slice, :, :, :]
 
-                    # 处理模型张量
+                    # Processing the model tensor
                     gpu_pred_logits_t, gpu_pred_t = self.model.flow(
                         gpu_input_t, pretrain=self.pretrain
                     )
                     gpu_pred_list.append(gpu_pred_t)
 
-                    if self.pretrain:  # 如果在预训练模式
-                        # 结构损失
+                    if self.pretrain:  # If in pre-training mode
+                        # structural damage
                         gpu_loss = tf.reduce_mean(
                             5
                             * nn.dssim(
@@ -178,11 +178,11 @@ class XSegModel(ModelBase):
                             ),
                             axis=[1],
                         )
-                        # 像素损失
+                        # pixel loss
                         gpu_loss += tf.reduce_mean(
                             10 * tf.square(gpu_target_t - gpu_pred_t), axis=[1, 2, 3]
                         )
-                    else:  # 如果不在预训练模式
+                    else:  # If not in pre-training mode
                         gpu_loss = tf.reduce_mean(
                             tf.nn.sigmoid_cross_entropy_with_logits(
                                 labels=gpu_target_t, logits=gpu_pred_logits_t
@@ -194,9 +194,9 @@ class XSegModel(ModelBase):
 
                     gpu_loss_gvs += [
                         nn.gradients(gpu_loss, self.model.get_weights())
-                    ]  # 计算梯度
+                    ]  # Calculating the gradient
 
-            # 计算损失和梯度的平均值，并创建优化器更新操作
+            # Calculate the average of the loss and gradient and create an optimizer update operation
             with tf.device(models_opt_device):
                 pred = tf.concat(gpu_pred_list, 0)
                 loss = tf.concat(gpu_losses, 0)
@@ -204,7 +204,7 @@ class XSegModel(ModelBase):
                     nn.average_gv_list(gpu_loss_gvs)
                 )
 
-            # 初始化训练和查看函数
+            # Initialize training and viewing functions
             if self.pretrain:
 
                 def train(input_np, target_np):
@@ -214,7 +214,7 @@ class XSegModel(ModelBase):
                             self.model.input_t: input_np,
                             self.model.target_t: target_np,
                         },
-                    )  # 如果是预训练模式，执行训练步骤
+                    )  # In case of pre-training mode, perform the training steps
                     return l
 
             else:
@@ -226,23 +226,23 @@ class XSegModel(ModelBase):
                             self.model.input_t: input_np,
                             self.model.target_t: target_np,
                         },
-                    )  # 如果不是预训练模式，执行训练步骤
+                    )  # If not in pre-training mode, perform the training steps
                     return l
 
-            self.train = train  # 将训练函数赋值给self.train
+            self.train = train  # Assign the training function to self.train
 
             def view(input_np):
                 return nn.tf_sess.run(
                     [pred], feed_dict={self.model.input_t: input_np}
-                )  # 定义查看函数，用于查看模型输出
+                )  # Define the view function to view the model output
 
             self.view = view
 
-            # 初始化样本生成器
-            cpu_count = min(multiprocessing.cpu_count(), 8)  # 获取CPU数量，最多使用8个
-            src_dst_generators_count = cpu_count // 2  # 源和目标生成器数量
-            src_generators_count = cpu_count // 2  # 源生成器数量
-            dst_generators_count = cpu_count // 2  # 目标生成器数量
+            # Initialize the sample generator
+            cpu_count = min(multiprocessing.cpu_count(), 8)  # Get the number of CPUs, use up to 8
+            src_dst_generators_count = cpu_count // 2  # Number of source and target generators
+            src_generators_count = cpu_count // 2  # Number of source generators
+            dst_generators_count = cpu_count // 2  # Number of target generators
 
             # Check for pak names
             # give priority to pak names in configuration file
@@ -397,7 +397,7 @@ class XSegModel(ModelBase):
             IM,
         ) = [
             np.repeat(x, (3,), -1) for x in [M, IM]
-        ]  # 将掩码重复三次以适应颜色通道
+        ]  # Repeat the mask three times to fit the color channel
 
         green_bg = np.tile(
             np.array([0, 1, 0], dtype=np.float32)[None, None, ...],
@@ -445,7 +445,7 @@ class XSegModel(ModelBase):
 
         if (
             not self.pretrain and len(src_samples) != 0
-        ):  # 如果不是预训练模式且源样本不为空
+        ):  # If it is not a pre-training mode and the source sample is not empty
             (src_np,) = src_samples
 
             (
@@ -483,7 +483,7 @@ class XSegModel(ModelBase):
 
         if (
             not self.pretrain and len(dst_samples) != 0
-        ):  # 如果不是预训练模式且目标样本不为空
+        ):  # If it is not a pre-training mode and the target sample is not empty
             (dst_np,) = dst_samples
 
             (
@@ -525,7 +525,7 @@ class XSegModel(ModelBase):
 
     def export_dfm(self):
         output_path = self.get_strpath_storage_for_file(f"model.onnx")
-        io.log_info(f"导出 .onnx 到 {output_path}")
+        io.log_info(f"Export .onnx to {output_path}")
         tf = nn.tf
 
         with tf.device(nn.tf_default_device_name):

@@ -5,35 +5,38 @@ from tensorflow.python.ops import array_ops, random_ops, math_ops, sparse_ops, g
 from tensorflow.python.framework import sparse_tensor
 from tensorflow.python.util import nest
 
-def recompute_grad(call):  # 定义一个名为 recompute_grad 的装饰器函数，它接受一个参数 call，这个参数是被装饰的函数或方法。
-    def inner(self, *inputs, **kwargs):  # 定义了内部函数 inner，它接收一个可能的实例 self，任意数量的输入参数 inputs 和关键字参数 kwargs。
-        is_function = tf.is_tensor(self)  # 检查 self 是否是一个 TensorFlow 张量。这用于区分传递给装饰器的是一个普通函数还是类的方法。
-        @tf.custom_gradient  # 这是一个装饰器，用于定义一个操作的正向传递和自定义梯度计算。
-        def call_and_grad(*inputs):  # 定义了一个内嵌函数 call_and_grad，它接收任意数量的输入参数。
-            def kernel_call():  # 定义了一个内部函数 kernel_call，用于执行被装饰的函数或方法的调用。
-                if is_function:  # 根据 is_function 的值来决定是直接调用 call 函数（对于普通函数），还是以 self 作为第一个参数调用 call（对于类的方法）。
+def recompute_grad(call):  # Define a decorator function called recompute_grad that accepts a single argument, call, which is the function or method being decorated.
+    def inner(self, *inputs, **kwargs):  # defines the inner function inner, which takes one possible instance of self, any number of inputs inputs and the keyword argument kwargs.
+        is_function = tf.is_tensor(self)  # Check if self is a TensorFlow tensor. This is used to distinguish whether what is passed to the decorator is a normal function or a method of a class.
+        @tf.custom_gradient  # This is a decorator for defining forward passes and custom gradient calculations for an operation.
+        def call_and_grad(*inputs):  # Defines an inline function call_and_grad that takes any number of input arguments.
+            def kernel_call():  # Defines an internal function, kernel_call, that performs the call of the decorated function or method.
+                if is_function:  # Depending on the value of is_function determines whether to call the call function directly (for normal functions) or call with self as the first argument (for class methods).
                     return call(*inputs, **kwargs)
                 else:
                     return call(self, *inputs, **kwargs)
-            outputs = kernel_call()  # 调用 kernel_call 函数并获取其输出。
-            def grad_fn(*doutputs, variables=None):  # 定义了用于计算梯度的函数 grad_fn。它接收梯度的输出 doutputs 和一个可选的 variables 参数。
-                with tf.control_dependencies(doutputs):  # 创建一个控制依赖环境，确保在计算梯度之前，doutputs 已经被计算。
-                    outputs = kernel_call()  # 再次调用 kernel_call 以确保所有操作都是最新的。
-                watches = nest.flatten(inputs)  # 将输入参数 inputs 展平，以便于在梯度计算中使用。
-                if variables is not None:  # 如果 variables 参数不为空，将其也加入到梯度计算的观察列表中。
+            outputs = kernel_call()  # Call the kernel_call function and get its output.
+            def grad_fn(*doutputs, variables=None):  # Defines a function grad_fn to compute the gradient, which takes the output doutputs of the gradient and an optional variables argument.
+                with tf.control_dependencies(doutputs):  # Create a control dependency environment that ensures doutputs are computed before the gradient is computed.
+                    outputs = kernel_call()  # Call kernel_call again to make sure all operations are up to date.
+                watches = nest.flatten(inputs)  # Flatten the input parameter inputs for use in gradient calculations.
+                if variables is not None:  # If the variables argument is not empty, add it to the watchlist for gradient computation as well.
                     watches += nest.flatten(variables)
                 grads = tf.gradients(outputs, watches, doutputs)
-                # 使用 TensorFlow 的 gradients 函数计算 outputs 相对于 watches 的梯度，其中 doutputs 是上游传来的梯度。
-                return grads[:len(inputs)], grads[len(inputs):]  # 返回分割后的梯度。前半部分是输入的梯度，后半部分（如果存在）是变量的梯度。
-                # grad_fn 函数返回的是两部分梯度：grads[:len(inputs)] 和 grads[len(inputs):]。这种分割的原因在于 TensorFlow 的 tf.gradients 函数的工作方式，以及如何处理输入和可训练变量的梯度。
-                # TensorFlow的tf.gradients函数：
-                # tf.gradients 函数计算给定输出（outputs）相对于一系列观测值（watches）的梯度。在这种情况下，观测值包括输入参数（inputs）和可能的额外可训练变量（variables）。
-                # 为什么要分割梯度：
-                # grads 是一个列表，其中包含了相对于每个观测值的梯度。这个列表首先包含对应于输入参数的梯度，然后是对应于可训练变量的梯度（如果有的话）。
-                # grads[:len(inputs)] 表示梯度列表中前 len(inputs) 个元素，这些是对应于函数输入参数的梯度。
-                # grads[len(inputs):] 表示梯度列表中从 len(inputs) 开始的剩余元素，这些是对应于可训练变量（如果有的话）的梯度。
-                # 应用场景：
-                # 在自定义梯度计算时，通常需要区分对输入参数的梯度和对可训练变量的梯度。这种分割使得函数能够正确地将梯度传递回上游操作，并同时更新可训练变量的梯度（如果存在的话）。
+                # Calculate the gradient of outputs relative to watches using TensorFlow's gradients function, where doutputs is the gradient passed upstream.
+                return grads[:len(inputs)], grads[len(inputs):]  # Returns the gradient after segmentation. The first half is the gradient of the input, the second half (if present) is the gradient of the variable.
+                # The grad_fn function returns a two-part gradient: grads[:len(inputs)] and grads[len(inputs):]. 
+                # The reason for this split lies in the way TensorFlow's tf.gradients function works and how it handles the gradients of inputs and trainable variables.
+                # TensorFlow's tf.gradients function:
+                # tf.gradients The tf.gradients function calculates the gradient of a given outputs with respect to a set of watches. In this case, the observations include inputs and possibly additional trainable variables.
+                # Why split the gradient:
+                # grads is a list containing the gradients relative to each observation. 
+                # This list contains first the gradients corresponding to the input parameters, and then the gradients corresponding to the trainable variables, if any.
+                # grads[:len(inputs)] denotes the first len(inputs) elements of the gradient list, which are the gradients corresponding to the input parameters of the function.
+                # grads[len(inputs):] denotes the remaining elements of the gradient list starting with len(inputs), these are the gradients corresponding to the trainable variables (if any).
+                # Application Scenarios:
+                # When customizing gradient computations, it is often necessary to distinguish between gradients over input parameters and gradients over trainable variables. 
+                # This split allows the function to correctly pass the gradient back to the upstream operation and simultaneously update the gradient of the trainable variable, if present.
             return outputs, grad_fn
         if is_function:
             return call_and_grad(self, *inputs)
@@ -51,13 +54,15 @@ tf.gradients(ys, xs,
 			 gate_gradients=False,
 			 aggregation_method=None,
 			 stop_gradients=None)                  
-原文链接：https://blog.csdn.net/hustqb/article/details/80260002
-对求导函数而言，其主要功能即求导公式：∂ y /∂ x 。在tensorflow中，y 和x 都是tensor。
-更进一步，tf.gradients()接受求导值ys和xs不仅可以是tensor，还可以是list，形如[tensor1, tensor2, …, tensorn]。当ys和xs都是list时，它们的求导关系为：
-gradients() adds ops to the graph to output the derivatives of ys with respect to xs. It returns a list of Tensor of length len(xs) where each tensor is the sum(dy/dx) for y in ys. 即gradients() 函数向计算图中添加操作，用于输出 ys 相对于 xs 的导数。它返回一个长度为 len(xs) 的张量列表，其中每个张量是对于 ys 中的每个 y 的 dy/dx 之和。
-意思是：1. tf.gradients()实现ys对xs求导
-2. 求导返回值是一个list，list的长度等于len(xs)
-3. 假设返回值是[grad1, grad2, grad3]，ys=[y1, y2]，xs=[x1, x2, x3]。则，真实的计算过程为:
+Original link: https://blog.csdn.net/hustqb/article/details/80260002
+For the derivative function, its main function is the derivation formula: ∂ y / ∂ x . In tensorflow, y and x are both tensors.
+Further, tf.gradients() accepts that the derived values ys and xs can be not only tensors but also lists, of the form [tensor1, tensor2, ..., tensorn]. When ys and xs are both lists, their derivation relation is:
+gradients() adds ops to the graph to output the derivatives of ys with respect to xs. It returns a list of Tensor of length len(xs) where each tensor is the sum (dy/dx) for y in ys. 
+The gradients() function adds ops to the graph to output the derivatives of ys with respect to xs. It returns a list of tensors of length len(xs) where each tensor is the sum of dy/dx for each y in ys.
+Meaning: 
+1. tf.gradients() implements ys to derive from xs
+2. The return value of the derivation is a list whose length is equal to len(xs).
+3. Suppose the return values are [grad1, grad2, grad3], ys=[y1, y2], xs=[x1, x2, x3]. Then, the real computational procedure is.
 g r a d 1 = ∂y 1/∂x 1 + ∂y 2/∂x 1 
 g r a d 2 = ∂y 1/∂x 2 + ∂y 2/∂x 2 
 g r a d 3 = ∂y 1/∂x 3 + ∂y 2/∂x 3
@@ -414,7 +419,9 @@ def depth_to_space(x, size):
 nn.depth_to_space = depth_to_space
 
 def rgb_to_lab(srgb):
-    # 这段代码定义了一个函数 rgb_to_lab，它的目的是将RGB颜色空间的像素值转换为CIELAB（简称Lab）颜色空间的值。CIELAB颜色空间是一种颜色表示方法，广泛用于颜色管理和图像处理领域，因为它更接近人类视觉感知，并可以描述所有可见的颜色。下面是对这段代码的详细解释：
+    # This code defines a function rgb_to_lab whose purpose is to convert pixel values in the RGB color space to values in the CIELAB (Lab for short) color space, 
+    # a color representation widely used in the fields of color management and image processing because it is closer to human visual perception and can describe all visible colors. 
+    # Here is a detailed explanation of this code:
     srgb_pixels = tf.reshape(srgb, [-1, 3])
     linear_mask = tf.cast(srgb_pixels <= 0.04045, dtype=tf.float32)
     exponential_mask = tf.cast(srgb_pixels > 0.04045, dtype=tf.float32)
@@ -463,24 +470,29 @@ nn.pixel_norm = pixel_norm
 '''
 def pixel_norm(x, axes):
 
-这行定义了一个函数 pixel_norm，它接受两个参数：x 和 axes。x 是输入张量，通常是神经网络层的输出；axes 是一个整数或整数列表，指明了要在 x 中进行归一化操作的轴。
+This line defines a function pixel_norm that takes two arguments: x and axes. x is the input tensor, usually the output of the neural network layer, 
+and axes is an integer or a list of integers specifying the axes to be normalized in x. The function pixel_norm takes two arguments.
 tf.square(x)
 
-这个表达式计算 x 的每个元素的平方。这是归一化过程的第一步，用于计算输入张量各元素的平方值。
+This expression calculates the square of each element of x. 
+This is the first step in the normalization process and is used to compute the squared value of each element of the input tensor.
 tf.reduce_mean(tf.square(x), axis=axes, keepdims=True)
 
-这里，tf.reduce_mean 计算 x 的平方沿着指定 axes 的平均值。keepdims=True 参数确保输出的维度与输入 x 相同（除了在 axes 上进行平均的维度）。
+Here, tf.reduce_mean computes the square of x averaged along the specified axes. 
+the keepdims=True parameter ensures that the dimensions of the output are the same as the input x (except for those dimensions that are averaged over the axes).
 tf.rsqrt(... + 1e-06)
 
-tf.rsqrt 函数计算其输入的逆平方根。这里的输入是 tf.reduce_mean 的输出加上一个很小的数（1e-06），以避免除以零的情况。这个小的数值是为了提高数值稳定性。
+The tf.rsqrt function computes the inverse square root of its input. Here the input is the output of tf.reduce_mean plus a very small number (1e-06) to avoid division by zero. This small number is to improve numerical stability.
 return x * tf.rsqrt(...)
 
-最后，原始输入 x 与 tf.rsqrt 的结果相乘。这个操作实际上是在对每个像素进行归一化，使其具有单位方差。这样的归一化方法通常有助于防止网络在训练过程中出现数值问题。
-综上所述，pixel_norm 函数通过将输入张量的每个像素值除以其局部区域的均方根来归一化数据，从而帮助改善和稳定深度学习模型（特别是 GANs）的训练过程。
+Finally, the original input x is multiplied with the result of tf.rsqrt. This operation actually normalizes each pixel to have unit variance. Such a normalization method usually helps prevent the network from having numerical problems during training.
+In summary, the pixel_norm function helps improve and stabilize the training process of deep learning models (especially GANs) by normalizing the data by dividing each pixel value of the input tensor by the root mean square of its local region.
 
-pixel_norm 函数不会将输出结果中的每个元素的值限制在0到1之间。这个函数的目的是对输入数据进行归一化，使每个元素的值与其周围值的方差相关。具体来说，它将每个元素的值除以其所在位置的局部均方根。这种归一化方法主要用于控制数据的分布，而不是将其限制在特定的范围内。
+The pixel_norm function does not limit the value of each element in the output to a value between 0 and 1. The purpose of this function is to normalize the input data so that the value of each element is related to the variance of its surrounding values. 
+Specifically, it divides the value of each element by the local root mean square of its location. This normalization method is primarily used to control the distribution of the data, rather than limiting it to a specific range.
 
-归一化的结果依赖于输入数据的特性。如果输入数据的局部区域具有较小的方差，归一化后的值可能会比较大；如果方差较大，归一化后的值可能会比较小。因此，归一化后的数据可能会超出 [0,1] 的范围。
+The result of normalization depends on the characteristics of the input data. If the local region of the input data has a small variance, 
+the normalized value may be larger; if the variance is larger, the normalized value may be smaller. As a result, the normalized data may fall outside the range [0,1].
 '''
 
 

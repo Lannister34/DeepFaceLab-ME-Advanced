@@ -42,9 +42,9 @@ class MEModel(ModelBase):
         # 定义最小和最大分辨率
         min_res = 64
         max_res = 640
-        
+
         self.batch_size = suggest_batch_size
-        
+
         default_archi = self.options["archi"] = self.load_or_def_option(
             "archi", "df-ud"
         )
@@ -65,18 +65,18 @@ class MEModel(ModelBase):
         default_lr_dropout = self.options["lr_dropout"] = lr_dropout
 
         default_loss_function = self.options["loss_function"] = "SSIM"
-        
+
         default_random_warp = self.options["random_warp"] = self.load_or_def_option(
             "random_warp", True
         )
         default_random_hsv_power = self.options["random_hsv_power"] = 0
-        
+
         default_random_downsample = self.options["random_downsample"] = False
         default_random_noise = self.options["random_noise"] = False
         default_random_blur = self.options["random_blur"] = False
         default_random_jpeg = self.options["random_jpeg"] = False
         default_super_warp = self.options["super_warp"] = False
-        
+
         default_rotation_range = self.rotation_range = [-3, 3]
         default_scale_range = self.scale_range = [-0.15, 0.15]
 
@@ -88,13 +88,13 @@ class MEModel(ModelBase):
             "ct_mode", "none"
         )
         default_random_color = self.options["random_color"] = False
-        
+
         default_clipgrad = self.options["clipgrad"] = True
-        
+
         default_pretrain = self.options["pretrain"] = False
 
         default_cpu_cap = self.options["cpu_cap"] = suggest_batch_size
-        
+
         default_preview_samples = self.options["preview_samples"] = 2
 
         default_full_preview = self.options["force_full_preview"] = False
@@ -102,7 +102,7 @@ class MEModel(ModelBase):
         default_lr = self.options["lr"] = self.load_or_def_option("lr", 4e-5)
 
         default_quick_opt = self.options["quick_opt"] = self.load_or_def_option("quick_opt", True)
-        
+
         # 判断是否需要覆盖模型设置
         ask_override = self.ask_override()
         self.quick_opt=default_quick_opt
@@ -113,7 +113,7 @@ class MEModel(ModelBase):
         if self.is_first_run():
             self.random_src_flip = True
             self.quick_opt = True
-            
+
     # 重写父类的on_initialize方法
     def on_initialize(self):
         # 获取当前设备配置和初始化数据格式
@@ -146,7 +146,7 @@ class MEModel(ModelBase):
             archi_type, archi_opts = archi_split
         elif len(archi_split) == 1:
             archi_type, archi_opts = archi_split[0], None
-        self.archi_type = archi_type        
+        self.archi_type = archi_type
         model_archi = nn.DeepFakeArchi(resolution, use_fp16=False, opts=archi_opts)  # 创建模型架构
 
         # 设置是否预训练
@@ -172,7 +172,7 @@ class MEModel(ModelBase):
         random_dst_flip = True
         random_hsv_power = 0.05
         blur_out_mask = False
-        
+
         if np.random.randint(3) > 0:
             ct_mode = "fs-aug"
         else:
@@ -646,7 +646,7 @@ class MEModel(ModelBase):
                         10 * tf.square(gpu_target_srcm - gpu_pred_src_srcm),
                         axis=[1, 2, 3],
                     )  # 计算GPU源掩码和GPU源预测掩码之间的损失
-                    
+
 
                     gpu_dst_loss = tf.reduce_mean(
                         5
@@ -998,7 +998,7 @@ class MEModel(ModelBase):
                     #print('找到预置权重')
                     # 尝试加载预训练模型权重，如果失败则设置do_init为True进行初始化
                     do_init = not model.load_weights(pretrained_filepath)
-                    
+
             # 如果需要初始化，初始化模型权重
             if do_init:
                 model.init_weights()
@@ -1377,7 +1377,7 @@ class MEModel(ModelBase):
         result += [
             ("Quick512 masked", np.concatenate(st_m, axis=0)),
         ]
-        
+
         return result
 
     def predictor_func(self, face=None):

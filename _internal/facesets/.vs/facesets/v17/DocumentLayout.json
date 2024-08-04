@@ -1,0 +1,93 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\controls\\facegrid.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:UI\\controls\\facegrid.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\utils\\DFLIMG\\DFLJPG.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:UI\\utils\\DFLIMG\\DFLJPG.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|d:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\Ui_FaceGrid.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:UI\\Ui_FaceGrid.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\facesets.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:facesets.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{a80febb4-e7e0-4147-b476-21aaf2453969}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{004be353-6879-467c-9d1e-9ac23cdf6d49}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "facegrid.py",
+              "DocumentMoniker": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\controls\\facegrid.py",
+              "RelativeDocumentMoniker": "UI\\controls\\facegrid.py",
+              "ToolTip": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\controls\\facegrid.py",
+              "RelativeToolTip": "UI\\controls\\facegrid.py",
+              "ViewState": "AQIAAMIAAAAAAAAAAAAkwNEAAAAYAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-04-22T14:45:11.812Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "DFLJPG.py",
+              "DocumentMoniker": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\utils\\DFLIMG\\DFLJPG.py",
+              "RelativeDocumentMoniker": "UI\\utils\\DFLIMG\\DFLJPG.py",
+              "ToolTip": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\utils\\DFLIMG\\DFLJPG.py",
+              "RelativeToolTip": "UI\\utils\\DFLIMG\\DFLJPG.py",
+              "ViewState": "AQIAAD4AAAAAAAAAAAAAAEQAAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-04-22T14:44:55.438Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Ui_FaceGrid.py",
+              "DocumentMoniker": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\Ui_FaceGrid.py",
+              "RelativeDocumentMoniker": "UI\\Ui_FaceGrid.py",
+              "ToolTip": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\UI\\Ui_FaceGrid.py",
+              "RelativeToolTip": "UI\\Ui_FaceGrid.py",
+              "ViewState": "AQIAAMUBAAAAAAAAAAAAwNwBAAAOAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-04-22T14:44:03.09Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "facesets.py",
+              "DocumentMoniker": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\facesets.py",
+              "RelativeDocumentMoniker": "facesets.py",
+              "ToolTip": "D:\\DFL-MVE-SN-2.2.0\\_internal\\facesets\\facesets.py",
+              "RelativeToolTip": "facesets.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA8AAAASAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2024-04-22T14:43:41.793Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

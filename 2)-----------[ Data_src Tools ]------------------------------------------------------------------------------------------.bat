@@ -1,0 +1,16 @@
+@echo off
+chcp 936 > nul
+attrib +h "2)-----------[ Data_src Tools ]------------------------------------------------------------------------------------------.bat"
+attrib -h "2)++++++++++++++++[ Data_src Tools ]+++++++++++++++++++++++++++++++++++++++++++.bat"
+attrib -h "2.1)--- data_src faceset extract MANUAL.bat"
+attrib -h "2.1)--- data_src faceset extract.bat"
+attrib -h "2.2)--- data_src view aligned result.bat"
+attrib -h "2.3)--- data_src add landmarks debug images.bat"
+attrib -h "2.3)--- data_src util faceset resize.bat"
+attrib -h "2.4)--- data_src sort.bat"
+attrib -h "2.5)--- data_src util faceset pack.bat"
+attrib -h "2.5)--- data_src util faceset unpack.bat"
+attrib -h "2.6)--- data_src util recover original filename.bat"
+attrib -h "2.6)--- data_src util faceset enhance.bat"
+attrib -h "2.7)--- data_src util faceset metadata save.bat"
+attrib -h "2.7)--- data_src util faceset metadata restore.bat"

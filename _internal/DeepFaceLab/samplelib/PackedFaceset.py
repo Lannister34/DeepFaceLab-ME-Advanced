@@ -39,8 +39,8 @@ class PackedFaceset():
             raise NotImplementedError
         
         if samples_dat_path.exists():
-            io.log_info(f"{samples_dat_path} : 文件已存在 !")
-            io.input("按回车键继续并覆盖.")
+            io.log_info(f"{samples_dat_path}: File already exists!")
+            io.input("Press enter to continue and overwrite.")
 
         as_person_faceset = False
         dir_names = pathex.get_all_dir_names(samples_path)
@@ -125,7 +125,7 @@ class PackedFaceset():
             zipObj.close()
           
         
-        if io.input_bool(f"删除原始文件?", True):
+        if io.input_bool(f"Delete the original file?", True):
             for filename in io.progress_bar_generator(image_paths, "Deleting files"):
                 Path(filename).unlink()
 
@@ -135,7 +135,7 @@ class PackedFaceset():
                     try:
                         shutil.rmtree(dir_path)
                     except:
-                        io.log_info (f"无法移除: {dir_path} ")
+                        io.log_info (f"irremovable: {dir_path} ")
 
     @staticmethod
     def unpack(samples_path):
@@ -163,7 +163,7 @@ class PackedFaceset():
             samples_config_path = samples_path / packed_faceset_filename_config
             samples_config_path.unlink()
         else:
-            io.log_info(f"{samples_path} : 未找到文件.")
+            io.log_info(f"{samples_path} : Document not found.")
 
         samples_dat_path.unlink()
 
@@ -193,7 +193,7 @@ class PackedFaceset():
             with zipfile.ZipFile(samples_dat_path, 'r') as zipObj:
                 rebuild_zip = False 
                 if zipObj.comment != hashlib.md5(str(zipObj.namelist()).encode()).digest():
-                    io.log_err("压缩文件损坏, 正在检查每个文件索引. 解压并重新打包!")
+                    io.log_err("The zip file is corrupt, checking each file index. Unzip and repack!")
                     rebuild_zip = True
                 samples_configs = pickle.loads(zipObj.read(packed_faceset_filename_config))
                 for sample_config in samples_configs:

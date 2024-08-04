@@ -257,13 +257,12 @@ class DFLJPG(object):
     def has_seg_ie_polys(self):
         return self.dfl_dict.get('seg_ie_polys',None) is not None
 
-    def get_seg_ie_polys(self):
+    def get_seg_ie_polys(self, fetch_from_xseg=True):
         d = self.dfl_dict.get('seg_ie_polys',None)
         if d is not None:
             d = SegIEPolys.load(d)
         else:
             d = SegIEPolys()
-
         return d
 
     def set_seg_ie_polys(self, seg_ie_polys):
@@ -287,7 +286,7 @@ class DFLJPG(object):
             return None
 
         return mask_buf
-        
+
     def get_xseg_mask(self):
         mask_buf = self.dfl_dict.get('xseg_mask',None)
         if mask_buf is None:

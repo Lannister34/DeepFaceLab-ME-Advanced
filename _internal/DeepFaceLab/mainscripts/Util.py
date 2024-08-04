@@ -13,116 +13,116 @@ from samplelib import PackedFaceset
 
 def is_packed(input_path):
     if PackedFaceset.path_contains(input_path):
-        io.log_info (f'\n{input_path} 包含打包的人脸集！请先解压它.\n')
+        io.log_info (f'\n{input_path} Contains the packaged faceset! Please unzip it first.\n')
         return True
 
 def save_faceset_metadata_folder(input_path):
-    # 将输入路径转换为 Path 对象
+    # Convert the input path to a Path object
     input_path = Path(input_path)
 
-    # 检查输入路径是否打包，如果是则返回
+    # Check if the input path is packed, if so return
     if is_packed(input_path): 
         return
 
-    # 定义元数据文件的路径
+    # Define the path to the metadata file
     metadata_filepath = input_path / 'meta.dat'
 
-    # 记录保存元数据的信息
-    io.log_info(f"将元数据保存至 {str(metadata_filepath)}\r\n")
+    # Record keeping metadata information
+    io.log_info(f"Save metadata to the {str(metadata_filepath)}\r\n")
 
-    # 初始化一个空字典以存储元数据
+    # Initialize an empty dictionary to store metadata
     d = {}
 
-    # 遍历输入路径中的图像文件
+    # Iterate over the image files in the input path
     for filepath in io.progress_bar_generator(pathex.get_image_paths(input_path), "Processing"):
         filepath = Path(filepath)
         
-        # 从图像文件加载 DFLIMG 对象
+        # Load DFLIMG objects from image files
         dflimg = DFLIMG.load(filepath)
 
-        # 检查 DFLIMG 是否有效且包含数据
+        # Check if DFLIMG is valid and contains data
         if dflimg is None or not dflimg.has_data():
-            io.log_info(f"{filepath} 不是 DFL 图像文件")
+            io.log_info(f"{filepath} not a DFL image file")
             continue
             
-        # 从 DFLIMG 获取元数据并存储在字典中
+        # Get metadata from DFLIMG and store it in a dictionary
         dfl_dict = dflimg.get_dict()
         d[filepath.name] = (dflimg.get_shape(), dfl_dict)
 
     try:
-        # 将包含元数据的字典写入元数据文件
+        # Write dictionary containing metadata to metadata file
         with open(metadata_filepath, "wb") as f:
             f.write(pickle.dumps(d))
     except:
-        # 如果文件写入失败，则引发异常
-        raise Exception('无法保存 %s' % (filename))
+        # Raise an exception if a file write fails
+        raise Exception('unsalvageable %s' % (filename))
 
-    # 记录关于编辑图像的信息
-    io.log_info("现在您可以编辑图像.")
-    io.log_info("!!! 保持文件夹中的相同文件名.")
-    io.log_info("您可以更改图像的大小，还原过程将缩小回原始大小")
-    io.log_info("之后，请使用还原元数据.")
+    # Record information about editing images
+    io.log_info("Now you can edit the image.")
+    io.log_info("!!!!! Keep the same file name in the folder...")
+    io.log_info("You can change the size of the image, the restore process will shrink it back to the original size.")
+    io.log_info("After that, please use the restore metadata.")
 
 def restore_faceset_metadata_folder(input_path):
-    # 将输入路径转换为 Path 对象
+    # Convert the input path to a Path object
     input_path = Path(input_path)
 
-    # 检查输入路径是否打包，如果是则返回
+    # Check if the input path is packed, if so return
     if is_packed(input_path):
         return
 
-    # 定义元数据文件的路径
+    # Define the path to the metadata file
     metadata_filepath = input_path / 'meta.dat'
     
-    # 记录关于恢复元数据的信息
-    io.log_info(f"从{str(metadata_filepath)}恢复元数据.\r\n")
+    # Record information on recovery metadata
+    io.log_info(f"Recover metadata from {str(metadata_filepath)}.\r\n")
 
-    # 如果元数据文件不存在，则记录错误
+    # Log error if metadata file does not exist
     if not metadata_filepath.exists():
-        io.log_err(f"找不到{str(metadata_filepath)}.")
+        io.log_err(f"can't find {str(metadata_filepath)}.")
 
     try:
-        # 从元数据文件读取包含元数据的字典
+        # Read a dictionary containing metadata from a metadata file
         with open(metadata_filepath, "rb") as f:
             d = pickle.loads(f.read())
     except:
-        # 如果文件读取失败，则引发异常
+        # Raise an exception if the file read fails
         raise FileNotFoundError(filename)
 
-    # 遍历具有特定扩展名的输入路径中的图像文件
+    # Iterate over image files in the input path with a specific extension
     for filepath in io.progress_bar_generator(pathex.get_image_paths(input_path, image_extensions=['.jpg'], return_Path_class=True), "Processing"):
-        # 获取当前文件的保存的元数据
+        # Get saved metadata for the current file
         saved_data = d.get(filepath.name, None)
         
-        # 检查当前文件是否存在保存的元数据
+        # Check if saved metadata exists in the current file
         if saved_data is None:
-            io.log_info(f"{filepath}没有保存的元数据")
+            io.log_info(f"{filepath} no saved metadata")
             continue
         
-        # 从保存的元数据中提取形状和 DFL 字典
+        # Extract shape and DFL dictionaries from saved metadata
         shape, dfl_dict = saved_data
 
-        # 使用 OpenCV 读取图像
+        # Reading images with OpenCV
         img = cv2_imread(filepath)
 
-        # 如果图像形状与保存的形状不匹配，则调整图像大小
+        # Resize the image if the image shape doesn't match the saved shape
         if img.shape != shape:
             img = cv2.resize(img, (shape[1], shape[0]), interpolation=cv2.INTER_LANCZOS4)
 
-            # 以原始文件名保存调整大小后的图像
+            # Save the resized image with the original file name
             cv2_imwrite(str(filepath), img, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
 
-        # 检查文件扩展名并相应地处理
+        # Check for file extensions and process accordingly
         if filepath.suffix == '.jpg':
-            # 加载 DFLJPG 对象并设置字典
+            # Load the DFLJPG object and set the dictionary
             dflimg = DFLJPG.load(filepath)
             dflimg.set_dict(dfl_dict)
             dflimg.save()
         else:
-            # 如果文件扩展名不是 '.jpg'，则跳过
+            # Skip if file extension is not '.jpg'
             continue
 
-    # 处理完成后删除元数据文件
+    # Delete metadata files after processing is complete
     metadata_filepath.unlink()
     
     
@@ -130,7 +130,7 @@ def add_landmarks_debug_images(input_path):
 
     if is_packed(input_path) : return
 
-    io.log_info ("添加标记点调试图像...")
+    io.log_info ("Adding Markers to Debug Images...")
 
     for filepath in io.progress_bar_generator( pathex.get_image_paths(input_path), "Processing"):
         filepath = Path(filepath)
@@ -140,7 +140,7 @@ def add_landmarks_debug_images(input_path):
         dflimg = DFLIMG.load (filepath)
 
         if dflimg is None or not dflimg.has_data():
-            io.log_err (f"{filepath.name} 不是DFL图像文件")
+            io.log_err (f"{filepath.name} not a DFL image file")
             continue
         
         if img is not None:
@@ -162,7 +162,7 @@ def recover_original_aligned_filename(input_path):
 
     if is_packed(input_path) : return
 
-    io.log_info ("恢复原始对齐后的文件名...")
+    io.log_info ("Restore the original aligned file name...")
 
     files = []
     for filepath in io.progress_bar_generator( pathex.get_image_paths(input_path), "Processing"):
@@ -171,7 +171,7 @@ def recover_original_aligned_filename(input_path):
         dflimg = DFLIMG.load (filepath)
 
         if dflimg is None or not dflimg.has_data():
-            io.log_err (f"{filepath.name} 不是DFL图像文件")
+            io.log_err (f"{filepath.name} not a DFL image file")
             continue
 
         files += [ [filepath, None, dflimg.get_source_filename(), False] ]

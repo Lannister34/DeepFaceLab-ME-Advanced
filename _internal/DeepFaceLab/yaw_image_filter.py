@@ -1,7 +1,7 @@
 #%% -*- coding:utf-8 -*-
 """
-作者：yangala@dfldata.xyz
-日期：2021-08-31 16:51:22
+Author: yangala@dfldata.xyz
+Date: 2021-08-31 16:51:22
 
 """
 #=====================================================
@@ -26,7 +26,7 @@ def getargv():
     return sys.argv[1]
 
 
-def check(f,cmd): # 符合条件的返回True
+def check(f,cmd): # Returns True if the condition is met
 
     dflimg = DFLJPG.load(f)
 
@@ -52,8 +52,8 @@ def check(f,cmd): # 符合条件的返回True
 
     k=180./3.14159
 
-    # pitch >40 仰头 <-40 看地
-    # yaw >45 向左  <-45 向右
+    # pitch >40 head up <-40 looking at the ground
+    # yaw >45 left <-45 right
 
     y, x, roll = pitch*k, yaw*k, roll*k
     r = random.random()
@@ -68,35 +68,35 @@ def check(f,cmd): # 符合条件的返回True
 
 
 sort_func_methods = {
-    '大角度': ("大角度：左右朝向大于40°，上下大于40° ", '(abs(x)>=40 or abs(y)>=40)'),
-    '上下大角度': ("上下大角度：上下大于40° ", '(abs(y)>=40)'),
-    '上下中等角度': ("上下中等角度：上下大于30° ", '(abs(y)>=30)'),
-    '左右大角度': ("左右大角度：左右大于40° ", '(abs(x)>=40)'),
-    '抽取20%的正脸': ("抽取20%的正脸：角度小于20°的头像随机抽取其中20% ", '( abs(x)<20 and abs(y)<20 and r<0.2 )'),
-    '非wf脸': ("非wf脸：根据脸型进行筛选", '(ft != 4)'),
-    '自定义': ("自定义：x表示左右，y表示上下,r表示0-1的随机值,ft表示脸型 ", ''),
+    'Large angle': ("Large angle: left and right facing greater than 40°, top and bottom greater than 40° ", '(abs(x)>=40 or abs(y)>=40)'),
+    'Upper and lower large angle': ("Upper and lower large angle: greater than 40° up and down ", '(abs(y)>=40)'),
+    'Upper and Lower Medium Angle': ("Upper and Lower Medium Angle: upper and lower greater than 30° ", '(abs(y)>=30)'),
+    'Left-Right Large Angle': ("Left-Right Large Angle: Left-Right > 40° ", '(abs(x)>=40)'),
+    'Extract 20% of positive faces': ("Extract 20% of positive faces: avatars with angle less than 20° randomly extract 20% of them ", '( abs(x)<20 and abs(y)<20 and r<0.2 ))'),
+    'Non-wf faces': ("Non-wf faces: filter by face type", '(ft ! = 4)'),
+    'custom': ("custom: x for left and right, y for up and down,r for random values from 0-1,ft for face type ", ''),
 }
 
 if __name__ == '__main__':
 
-    print('yaw_image_filter.py 启动......')
+    print('yaw_image_filter.py Start ......')
     a=getargv()
 
     if os.path.exists(a):
         pass
     else:
-        # print('不存在jpg所在目录：', a)
-        a=input('路径无效，请输入jpg所在目录：')
+        # print('Directory where jpg does not exist:', a)
+        a=input('Path is invalid, please enter the directory where the jpg is located:')
 
-    # jpg所在目录
+    # Directory where the jpg is located
     alignedpath=Path(a)
     if alignedpath.is_file():
         alignedpath = alignedpath.parent
 
 
-    print(f"\r\n头像所在目录为:{alignedpath}\r\n")
+    print(f"\r\n avatar is in the directory: {alignedpath}\r\n")
 
-    # 菜单
+    # Menu
     key_list = list(sort_func_methods.keys())
     for i, key in enumerate(key_list):
         desc, func = sort_func_methods[key]
@@ -112,46 +112,46 @@ if __name__ == '__main__':
 
     if cmd == '':
         print('''
-    x 表示左右，大于0表示朝左，小于0表示朝右
-    y 表示上下，大于0表示抬头，小于0表示低头
-    r 表示0-1的随机值
-    
-    ft 脸型 wf=4 f=2 head=10
-    
-    abs()取绝对值的函数
-    
-    and 并且
-    or 或者
-    not 非
-    
-    示例： 
-    r<0.2           表示随机抽取20%的头像
-    x>20 and y<-20  表示抽取朝左20°并且低头20°的头像 
-    ft!=4           表示抽取非wf的脸型
+    x means left and right, greater than 0 means left, less than 0 means right.
+    y is up and down, greater than 0 means head up, less than 0 means head down
+    r is a random value from 0 to 1
+
+    ft face type wf=4 f=2 head=10
+
+    abs() function to take absolute value
+
+    and and
+    or or
+    not
+
+    Example:
+    r<0.2 means that 20% of the avatars are randomly selected.
+    x>20 and y<-20 means randomize avatars that are 20° to the left and 20° down.
+    ft!=4 means randomize non-wf faces.
         ''')
-        cmd = input('请输入判断依据：')
+        cmd = input('Please enter the basis for your judgment:')
     # if cmd == '':
-    #     print('cmd为空，退出')
+    #     print('cmd is empty, exit')
     #     exit(0)
 
     # print(sort_by_method, cmd)
 
 
-    # 目标目录
+    # Target directory
     mubiao = 'aligned_'+sort_by_method
-    a = input(f'请输入目标目录名，直接按回车则默认为 {mubiao} :')
+    a = input(f'Please enter the destination directory name, if you press enter directly, it will be {mubiao}.:')
     if a == '':
         a = mubiao
     filterpath = alignedpath.parent / (a)
     if not filterpath.exists():
         filterpath.mkdir(parents=True)
 
-    # 拷贝还是移动
-    a = input(f'是拷贝文件还是移动文件？1拷贝，2移动，直接按回车则默认为 1拷贝 :')
+    # Copy or move
+    a = input(f'Whether to copy or move the file, 1 copy, 2 move, press enter to default to 1 copy.')
     if a=='' or a=='1':
-        cpimg = '拷贝：'
+        cpimg = 'Copy:'
     else:
-        cpimg = '移动：'
+        cpimg = 'Moving:'
 
     #
     #
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     # cmd = '(abs(x)>=40 or abs(y)>=30) and r<0.1 '
     # # cmd = 'x>10.0'
 
-    # 统计角度分布
+    # Statistical angular distribution
     tongji = [ [ 0 for b in range(7)   ] for a in range(7) ]
     def xyidx(x):
         return min(6,max(0,int(x+90+14.99999)//30))
@@ -176,7 +176,7 @@ if __name__ == '__main__':
                 # print(f.name)
                 print(cnt,cpimg,f.name)
                 dst = filterpath / f.name
-                if cpimg == '拷贝：':
+                if cpimg == 'Copy:':
                     shutil.copy(f,dst)
                 else:
                     shutil.move(f,dst)
@@ -185,8 +185,8 @@ if __name__ == '__main__':
                 print(cnt,f.name)
 
     print()
-    print(f"处理结果:{filterpath}")
-    print(f'共有文件 {cnt} 个，{cpimg} {cntcopy} 个 {sort_by_method}')
+    print(f'Processing result: {filterpath}')
+    print(f'Total files {cnt}, {cpimg} {cntcopy} {sort_by_method}')
 
     jiaodu = ['','<-75','-60 ','-30 ','0±15','30  ','60  ','>75 ']
     print()

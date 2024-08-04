@@ -25,12 +25,12 @@ from tqdm import tqdm
 
 
 class MEModel(ModelBase):
-    # 重写父类的on_initialize_options方法
+    # Override the on_initialize_options method of the parent class
     def on_initialize_options(self):
-        # 获取当前的设备配置
+        # Get the current device configuration
         device_config = nn.getCurrentDeviceConfig()
 
-        # 根据设备的VRAM容量建议批处理大小
+        # Recommended batch size based on device's VRAM capacity
         lowest_vram = 2
         if len(device_config.devices) != 0:
             lowest_vram = device_config.devices.get_worst_device().total_mem_gb
@@ -39,7 +39,7 @@ class MEModel(ModelBase):
         else:
             suggest_batch_size = 4
 
-        # 定义最小和最大分辨率
+        # Define minimum and maximum resolution
         min_res = 64
         max_res = 640
         default_usefp16 = self.options["use_fp16"] = self.load_or_def_option(
@@ -134,7 +134,7 @@ class MEModel(ModelBase):
         default_rotation_range = self.rotation_range = [-3, 3]
         default_scale_range = self.scale_range = [-0.15, 0.15]
 
-        # 加载或定义其他训练相关的默认选项
+        # Load or define other training-related default options
         default_background_power = self.options["background_power"] = (
             self.load_or_def_option("background_power", 0.0)
         )
@@ -170,32 +170,32 @@ class MEModel(ModelBase):
         )
         default_lr = self.options["lr"] = self.load_or_def_option("lr", 5e-5)
 
-        # 判断是否需要覆盖模型设置
+        # Determine if model settings need to be overridden
         ask_override = False if self.read_from_conf else self.ask_override()
         if self.is_first_run() or ask_override:
             if (
                 self.read_from_conf and not self.config_file_exists
             ) or not self.read_from_conf:
-                # 如果是首次运行或需要覆盖设置，则询问用户输入各种配置
+                # If this is the first time it is run or the settings need to be overridden, the user is asked to enter various configurations
                 self.ask_autobackup_hour()
                 self.ask_maximum_n_backups()
                 self.ask_write_preview_history()
                 self.options["preview_samples"] = np.clip(
                     io.input_int(
-                        "预览样本数量（纵向）",
+                        "Preview sample size (longitudinal)",
                         default_preview_samples,
                         add_info="1 - 6",
-                        help_message="典型的精细值为4",
+                        help_message="Typical fine values are 4",
                     ),
                     1,
                     16,
                 )
                 self.options["force_full_preview"] = io.input_bool(
-                    "强制不分离预览", default_full_preview,
-                    help_message="遇到大分辨率也会展开五列",
+                    "Forced non-separation preview", default_full_preview,
+                    help_message="Five columns are also expanded for large resolutions",
                 )
 
-                # 获取其他训练相关配置
+                # Get other training-related configurations
                 self.ask_reset_training()
                 self.ask_target_iter()
                 self.ask_retraining_samples(default_retraining_samples)
@@ -203,16 +203,16 @@ class MEModel(ModelBase):
                 self.ask_random_dst_flip()
                 self.ask_batch_size(suggest_batch_size)
                 self.options["use_fp16"] = io.input_bool(
-                    "使用fp16（测试功能）",
+                    "Use of fp16 (test function)",
                     default_usefp16,
-                    help_message="提高训练速度，减少显存占用，可增加BS上限。前期易崩溃，后期精度不够，建议5000~200000迭代使用, 务必先备份！",
+                    help_message="Increase training speed, reduce video memory usage, increase BS limit. Easy to crash in the early stage, not enough precision in the late stage, 5000~200000 iterations are recommended, make sure to backup first!",
                 )
                 self.options["cpu_cap"] = np.clip(
                     io.input_int(
-                        "最大使用的 CPU 核心数.",
+                        "Maximum number of CPU cores used.",
                         default_cpu_cap,
                         add_info="1 - 256",
-                        help_message="典型的精细值为 8",
+                        help_message="Typical fine values are 8",
                     ),
                     1,
                     256,
@@ -222,35 +222,35 @@ class MEModel(ModelBase):
             if (
                 self.read_from_conf and not self.config_file_exists
             ) or not self.read_from_conf:
-                # 获取训练分辨
+                # Obtaining training discrimination
                 resolution = io.input_int(
-                    "分辨率 Resolution",
+                    "Resolution",
                     default_resolution,
                     add_info="64-640",
-                    help_message="更高的分辨率需要更多的 VRAM 和训练时间。该值将调整为 16 和 32 的倍数，以适应不同的架构.",
+                    help_message="Higher resolutions require more VRAM and training time. This value will be adjusted to multiples of 16 and 32 to accommodate different architectures.",
                 )
                 resolution = np.clip((resolution // 16) * 16, min_res, max_res)
                 self.options["resolution"] = resolution
                 self.options["face_type"] = io.input_str(
-                    "人脸类型 Face_type",
+                    "Face_type",
                     default_face_type,
                     ["h", "mf", "f", "wf", "head", "custom"],
-                    help_message="Half / mid face / full face / whole face / head / custom. 半脸/中脸/全脸/全脸/头部/自定义。半脸的分辨率较高，但覆盖脸颊的面积较小。中脸比半脸宽 30%。全脸 包括前额在内的整个脸部。头部覆盖整个头部，但需要 XSeg 来获取源和目的面部集",
+                    help_message="Half / mid face / full face / whole face / head / custom. Half Face/Mid Face/Full Face/Full Face/Head/Custom. Half face has a higher resolution but covers a smaller area of the cheeks. Mid face is 30% wider than half face. Full Face Covers the entire face including the forehead. Head covers the entire head, but requires XSeg to get the source and destination face sets",
                 ).lower()
 
-                # 获取训练架构配置
+                # Get Training Architecture Configuration
                 while True:
                     archi = io.input_str(
                         "AE architecture",
                         default_archi,
                         help_message="""
-                            'df' 保持更多身份特征的脸部（更像SRC）。
-                            'liae' 可以修复过于不同的脸部形状（更像DST）。
-                            '-u' 增加与源人脸（SRC）的相似度，需要更多 VRAM。
-                            '-d' 计算成本减半。需要更长的训练时间，并建议使用预训练模型。分辨率必须按 32 的倍数更改
-							'-t' 增加与源人脸（SRC）的相似度。
-							'-c' （实验性）将激活函数设置为余弦单位（默认值：Leaky ReLu）。
-                            示例: df, liae-d, df-dt, liae-udt, ...
+                            'df' Keep more identity in the face (more like SRC).
+                            'liae' Can fix too different face shapes (more like DST).
+                            '-u' Increasing the similarity to the source face (SRC) requires more VRAM.
+                            '-d' Halves the computational cost. Longer training times are required and the use of pre-trained models is recommended. Resolution must be changed in multiples of 32
+							'-t' Increase the similarity to the source face (SRC).
+							'-c' (Experimental) Set the activation function to cosine units (default: Leaky ReLu).
+                            typical example: df, liae-d, df-dt, liae-udt, ...
                             """,
                     ).lower()
 
@@ -300,20 +300,20 @@ class MEModel(ModelBase):
             default_d_mask_dims = self.options["d_mask_dims"] = self.load_or_def_option(
                 "d_mask_dims", default_d_mask_dims
             )
-            # 作者签名
+            # Author's signature
             self.ask_author_name()
 
-        # 首次运行时获取AutoEncoder、Encoder和Decoder的维度配置
+        # Getting AutoEncoder, Encoder, and Decoder dimension configurations on first run
         if self.is_first_run():
             if (
                 self.read_from_conf and not self.config_file_exists
             ) or not self.read_from_conf:
                 self.options["ae_dims"] = np.clip(
                     io.input_int(
-                        "自动编码器尺寸 AutoEncoder dimensions",
+                        "AutoEncoder dimensions",
                         default_ae_dims,
                         add_info="32-1024",
-                        help_message="所有脸部信息将被压缩到AE维度。如果AE维度不够，例如闭上的眼睛可能无法识别。更多的维度意味着更好，但需要更多VRAM。可以根据GPU调整模型大小。",
+                        help_message="All face information will be compressed to the AE dimension. If the AE dimension is not enough, e.g. closed eyes may not be recognized. More dimensions means better, but requires more VRAM. the model can be resized according to the GPU.",
                     ),
                     32,
                     1024,
@@ -321,10 +321,10 @@ class MEModel(ModelBase):
 
                 e_dims = np.clip(
                     io.input_int(
-                        "编码器尺寸 Encoder dimensions",
+                        "Encoder dimensions",
                         default_e_dims,
                         add_info="16-256",
-                        help_message="更多维度有助于识别更多面部特征并获得更清晰的结果，但需要更多VRAM。可以根据GPU调整模型大小。",
+                        help_message="More dimensions help to recognize more facial features and get clearer results but require more VRAM. the model size can be adjusted according to the GPU.",
                     ),
                     16,
                     256,
@@ -333,10 +333,10 @@ class MEModel(ModelBase):
 
                 d_dims = np.clip(
                     io.input_int(
-                        "解码器尺寸 Decoder dimensions",
+                        "Decoder dimensions",
                         default_d_dims,
                         add_info="16-256",
-                        help_message="更多维度有助于识别更多面部特征并获得更清晰的结果，但需要更多VRAM。可以根据GPU调整模型大小。",
+                        help_message="More dimensions help to recognize more facial features and get clearer results but require more VRAM. the model size can be adjusted according to the GPU.",
                     ),
                     16,
                     256,
@@ -345,61 +345,61 @@ class MEModel(ModelBase):
 
                 d_mask_dims = np.clip(
                     io.input_int(
-                        "解码器遮罩尺寸 Decoder mask dimensions",
+                        "Decoder mask dimensions",
                         default_d_mask_dims,
                         add_info="16-256",
-                        help_message="典型的遮罩维度是解码器维度的三分之一。如果你手动从目标遮罩中剔除障碍物，可以增加此参数以获得更好的质量。",
+                        help_message="A typical mask dimension is one third of the decoder dimension. You can increase this parameter for better quality if you manually remove obstacles from the target mask.",
                     ),
                     16,
                     256,
                 )
 
                 self.options["adabelief"] = io.input_bool(
-                    "使用AdaBelief优化器 Use AdaBelief optimizer?",
+                    "Use AdaBelief optimizer?",
                     default_adabelief,
-                    help_message="使用 AdaBelief 优化器。它需要更多的 VRAM，但模型的准确性和泛化程度更高",
+                    help_message="Use the AdaBelief optimizer. It requires more VRAM, but the model is more accurate and generalized",
                 )
 
                 self.options["d_mask_dims"] = d_mask_dims + d_mask_dims % 2
 
-        # 首次运行或需要覆盖设置时的配置
+        # Configuration for the first time you run it or if you need to override settings
         if self.is_first_run() or ask_override:
             if (
                 self.read_from_conf and not self.config_file_exists
             ) or not self.read_from_conf:
-                # 特定脸部类型的额外配置
+                # Additional configurations for specific face types
                 if self.options["face_type"] in ["wf", "head", "custom"]:
                     self.options["masked_training"] = io.input_bool(
-                        "遮罩训练 Masked training",
+                        "Masked training",
                         default_masked_training,
-                        help_message="此选项仅适用于'whole_face'或'head'类型。遮罩训练将训练区域剪辑到全脸遮罩或XSeg遮罩，从而更好地训练脸部。",
+                        help_message="This option is only available for 'whole_face' or 'head' types. Mask training clips the training region to a full face mask or XSeg mask to better train the face.",
                     )
 
-                # 获取眼睛和嘴巴优先级配置
+                # Getting eye and mouth priority configurations
                 self.options["eyes_prio"] = io.input_bool(
-                    "眼睛优先 Eyes priority",
+                    "Eyes priority",
                     default_eyes_prio,
-                    help_message='有助于解决训练中的眼睛问题，如"异形眼"和错误的眼睛方向（特别是在高分辨率训练），通过强制神经网络优先训练眼睛。',
+                    help_message='Helps to solve eye problems in training, such as "alien eyes" and wrong eye orientation (especially in high-resolution training), by forcing the neural network to prioritize eye training.',
                 )
                 self.options["mouth_prio"] = io.input_bool(
-                    "嘴巴优先 Mouth priority",
+                    "Mouth priority",
                     default_mouth_prio,
-                    help_message="有助于通过强制神经网络优先训练嘴巴来解决训练中的嘴巴问题。",
+                    help_message="helps to solve the mouth-in-training problem by forcing the neural network to prioritize the mouth.",
                 )
 
-                # 获取其他训练配置
+                # Get other training configurations
                 self.options["uniform_yaw"] = io.input_bool(
-                    "侧脸优化 Uniform yaw distribution of samples",
+                    "Uniform yaw distribution of samples",
                     default_uniform_yaw,
-                    help_message="有助于解决样本中侧脸模糊的问题，由于侧脸在数据集中数量较少。",
+                    help_message="helps to solve the problem of blurring of side faces in the sample, due to the small number of side faces in the dataset.",
                 )
                 self.options["blur_out_mask"] = io.input_bool(
-                    "遮罩边缘模糊 Blur out mask",
+                    "Blur out mask",
                     default_blur_out_mask,
-                    help_message="在训练样本的应用面部遮罩的外围区域进行模糊处理。结果是脸部附近的背景平滑且在换脸时不那么明显。需要在源和目标数据集中使用精确的xseg遮罩。",
+                    help_message="The peripheral regions of the applied face mask are blurred in the training samples. The result is a smooth background near the face and less noticeable during face changing. Exact xseg masks need to be used in both source and target datasets.",
                 )
 
-        # GAN相关配置
+        # GAN-related configurations
         default_gan_power = self.options["gan_power"] = self.load_or_def_option(
             "gan_power", 0.0
         )
@@ -421,78 +421,78 @@ class MEModel(ModelBase):
                 self.read_from_conf and not self.config_file_exists
             ) or not self.read_from_conf:
                 self.options["models_opt_on_gpu"] = io.input_bool(
-                    "将模型和优化器放到GPU上 Place models and optimizer on GPU",
+                    "Place models and optimizer on GPU",
                     default_models_opt_on_gpu,
-                    help_message="在一个 GPU 上进行训练时，默认情况下模型和优化器权重会放在 GPU 上，以加速训练过程。您可以将它们放在 CPU 上，以释放额外的 VRAM，从而设置更大的维度",
+                    help_message="When training on one GPU, by default the model and optimizer weights are placed on the GPU to speed up the training process. You can place them on the CPU to free up additional VRAM to set larger dimensions",
                 )
 
                 self.options["lr_dropout"] = io.input_str(
-                    f"使用学习率下降 Use learning rate dropout",
+                    f"Use learning rate dropout",
                     default_lr_dropout,
                     ["n", "y", "cpu"],
-                    help_message="当人脸训练得足够好时，可以启用该选项来获得额外的清晰度，并减少子像素抖动，从而减少迭代次数。在 禁用随机扭曲 和 GAN 之前启用。在 CPU 上启用。这样就可以不使用额外的 VRAM，牺牲 20% 的迭代时间",
+                    help_message="When the face is trained well enough, this option can be enabled to get extra sharpness and reduce sub-pixel jitter, thus reducing the number of iterations. Enable before disabling random warping and GAN. Enable on the CPU. This allows you to sacrifice 20% of the iteration time by not using extra VRAM",
                 )
 
                 self.options["loss_function"] = io.input_str(
-                    f"损失函数 Loss function",
+                    f"Loss function",
                     default_loss_function,
                     ["SSIM", "MS-SSIM", "MS-SSIM+L1"],
-                    help_message="用于图像质量评估的变化损失函数",
+                    help_message="Variation loss function for image quality assessment",
                 )
 
                 self.options["lr"] = np.clip(
                     io.input_number(
-                        "学习率 Learning rate",
+                        "Learning rate",
                         default_lr,
                         add_info="0.0 .. 1.0",
-                        help_message="学习率：典型精细值 5e-5",
+                        help_message="Learning rate: Typical fine values 5e-5",
                     ),
                     0.0,
                     1,
                 )
 
                 self.options["random_warp"] = io.input_bool(
-                    "启用样本随机扭曲 Enable random warp of samples",
+                    "Enable random warp of samples",
                     default_random_warp,
-                    help_message="要概括两张人脸的面部表情，需要使用随机翘曲。当人脸训练得足够好时，可以禁用它来获得额外的清晰度，并减少亚像素抖动，从而减少迭代次数",
+                    help_message="To generalize the facial expressions of two faces, random warping is required. When faces are trained well enough, it can be disabled to gain extra sharpness and reduce sub-pixel jitter, thus reducing the number of iterations",
                 )
 
                 self.options["random_hsv_power"] = np.clip(
                     io.input_number(
-                        "随机色调/饱和度/光强度 Random hue/saturation/light intensity",
+                        "Random hue/saturation/light intensity",
                         default_random_hsv_power,
                         add_info="0.0 .. 0.3",
-                        help_message="随机色调/饱和度/光照强度仅应用于神经网络输入的src人脸集。稳定人脸交换过程中的色彩扰动。通过选择原始面孔集中最接近的面孔来降低色彩转换的质量。因此src人脸集必须足够多样化。典型的精细值为 0.05",
+                        help_message="Random hue/saturation/light intensity is only applied to the src face set input by the neural network. Stabilizes color perturbations during face swapping. Reduce the quality of color conversion by selecting the closest faces in the original face set. Therefore the src face set must be sufficiently diverse. Typical refinement values are 0.05",
                     ),
                     0.0,
                     0.3,
                 )
 
                 self.options["random_downsample"] = io.input_bool(
-                    "启用样本随机降低采样 Enable random downsample of samples",
+                    "Enable random downsample of samples",
                     default_random_downsample,
-                    help_message="通过缩小部分样本来挑战模型",
+                    help_message="Challenging the model by shrinking part of the sample",
                 )
                 self.options["random_noise"] = io.input_bool(
-                    "启用在样本中随机添加噪音 Enable random noise added to samples",
+                    "Enable random noise added to samples",
                     default_random_noise,
-                    help_message="通过在某些样本中添加噪音来挑战模型",
+                    help_message="Challenge the model by adding noise to some samples",
                 )
                 self.options["random_blur"] = io.input_bool(
-                    "启用对样本的随机模糊 Enable random blur of samples",
+                    "Enable random blur of samples",
                     default_random_blur,
-                    help_message="通过在某些样本中添加模糊效果来挑战模型",
+                    help_message="Challenging the model by adding blurring effects to certain samples",
                 )
                 self.options["random_jpeg"] = io.input_bool(
-                    "启用随机压缩jpeg样本 Enable random jpeg compression of samples",
+                    "Enable random jpeg compression of samples",
                     default_random_jpeg,
-                    help_message="通过对某些样本应用 jpeg 压缩的质量降级来挑战模型",
+                    help_message="Challenge the model by applying jpeg-compressed quality degradation to some samples",
                 )
 
                 self.options["super_warp"] = io.input_bool(
-                    "启用样本超级扭曲 Enable super warp of samples",
+                    "Enable super warp of samples",
                     default_super_warp,
-                    help_message="大多数时候不要开启，占用更多时间和空间。只有dst有夸张大幅度表情，而src无对应表情时，可以尝试增大计算量以求融合。或许搭配嘴巴优先 Mouth priority更有针对性！",
+                    help_message="Don't turn it on most of the time, it takes up more time and space. Only if the dst has an exaggeratedly large expression and the src doesn't, try increasing the amount of computation in order to blend it in. Maybe with Mouth priority!",
                 )
 
                 # if self.options["super_warp"] == True:
@@ -501,18 +501,18 @@ class MEModel(ModelBase):
 
                 """
                 self.options["random_shadow"] = io.input_str(
-                    "启用对样本的随机阴影和高光 Enable random shadows and highlights of samples",
+                    "Enable random shadows and highlights of samples",
                     default_random_shadow,
                     ["none", "src", "dst", "all"],
-                    help_message="有助于在数据集中创建暗光区域。如果你的src数据集缺乏阴影/不同的光照情况；使用dst以帮助泛化；或者使用all以满足两者的需求",
+                    help_message="Helps to create dark light areas in the dataset. If your src dataset lacks shadows/different light situations; use dst to help generalize; or use all for both!",
                 )
                 """
                 self.options["gan_power"] = np.clip(
                     io.input_number(
-                        "GAN强度 GAN power",
+                        "GAN power",
                         default_gan_power,
                         add_info="0.0 .. 10.0",
-                        help_message="以生成对抗方式训练网络。强制神经网络学习人脸的小细节。只有当人脸训练得足够好时才启用它，否则就不要禁用。典型值为 0.1",
+                        help_message="Train the network in a generative adversarial manner. Force the neural network to learn small details about faces. Enable it only if the face is trained well enough, otherwise don't disable it. Typical value is 0.1",
                     ),
                     0.0,
                     10.0,
@@ -521,10 +521,10 @@ class MEModel(ModelBase):
                 if self.options["gan_power"] != 0.0:
                     gan_patch_size = np.clip(
                         io.input_int(
-                            "GAN补丁大小 GAN patch size",
+                            "GAN patch size",
                             default_gan_patch_size,
                             add_info="3-640",
-                            help_message="补丁大小越大，质量越高，需要的显存越多。即使在最低设置下，您也可以获得更清晰的边缘。典型的良好数值是分辨率除以8",
+                            help_message="The larger the patch size, the higher the quality and the more video memory required. You will get sharper edges even at the lowest settings. Typical good values are resolution divided by 8",
                         ),
                         3,
                         640,
@@ -533,10 +533,10 @@ class MEModel(ModelBase):
 
                     gan_dims = np.clip(
                         io.input_int(
-                            "GAN维度 GAN dimensions",
+                            "GAN dimensions",
                             default_gan_dims,
                             add_info="4-64",
-                            help_message="GAN 网络的尺寸。尺寸越大，所需的 VRAM 越多。即使在最低设置下，也能获得更清晰的边缘。典型的精细值为 16",
+                            help_message="Size of the GAN network. The larger the size, the more VRAM is required. Sharper edges are obtained even at the lowest settings. Typical fine values are 16",
                         ),
                         4,
                         64,
@@ -545,20 +545,20 @@ class MEModel(ModelBase):
 
                     self.options["gan_smoothing"] = np.clip(
                         io.input_number(
-                            "GAN标签平滑 GAN label smoothing",
+                            "GAN label smoothing",
                             default_gan_smoothing,
                             add_info="0 - 0.5",
-                            help_message="使用软标签，其值略微偏离 GAN 的 0/1，具有正则化效果",
+                            help_message="Regularization effect using soft labels whose values slightly deviate from 0/1 of the GAN",
                         ),
                         0,
                         0.5,
                     )
                     self.options["gan_noise"] = np.clip(
                         io.input_number(
-                            "GAN噪声标签 GAN noisy labels",
+                            "GAN noisy labels",
                             default_gan_noise,
                             add_info="0 - 0.5",
-                            help_message="用错误的标签标记某些图像，有助于防止塌陷",
+                            help_message="Labeling certain images with incorrect labels helps prevent collapse",
                         ),
                         0,
                         0.5,
@@ -567,10 +567,10 @@ class MEModel(ModelBase):
                 if "df" in self.options["archi"]:
                     self.options["true_face_power"] = np.clip(
                         io.input_number(
-                            "真脸(src)强度 'True face' power.",
+                            "True face (src) power.",
                             default_true_face_power,
                             add_info="0.0000 .. 1.0",
-                            help_message="实验选项。判别结果面孔更像原始面孔。数值越大，判别能力越强。典型值为0.01。比较 - https://i.imgur.com/czScS9q.png",
+                            help_message="Experimental Options. Discriminate the resultant face to be more like the original face. The larger the value, the better the discrimination. Typical value is 0.01. Comparison - https://i.imgur.com/czScS9q.png",
                         ),
                         0.0,
                         1.0,
@@ -580,10 +580,10 @@ class MEModel(ModelBase):
 
                 self.options["background_power"] = np.clip(
                     io.input_number(
-                        "背景(src)强度 Background power",
+                        "background (src) power",
                         default_background_power,
                         add_info="0.0..1.0",
-                        help_message="了解遮罩外的区域。有助于平滑遮罩边界附近的区域。可随时使用",
+                        help_message="Understand the area outside the mask. Helps smooth out areas near the mask boundary. Ready to use",
                     ),
                     0.0,
                     1.0,
@@ -591,46 +591,46 @@ class MEModel(ModelBase):
 
                 self.options["face_style_power"] = np.clip(
                     io.input_number(
-                        "人脸(dst)强度 Face style power",
+                        "Face style (dst) power",
                         default_face_style_power,
                         add_info="0.0..100.0",
-                        help_message="学习预测脸部的颜色，使其与遮罩内的 dst 相同。如果要将此选项与whole_face一起使用，则必须使用 XSeg 训练掩码。警告： 只有在 10k 次之后，当预测的面部足够清晰，可以开始学习风格时，才能启用该选项。从 0.001 值开始，检查历史变化。启用此选项会增加模型崩溃的几率",
+                        help_message="Learns to predict the color of the face so that it is the same as the dst inside the mask. To use this option with whole_face, the XSeg training mask must be used. Warning: Enable this option only after 10k passes, when the predicted face is clear enough to start learning the style. Start with a value of 0.001 and check for historical changes. Enabling this option increases the chance of model crashes!",
                     ),
                     0.0,
                     100.0,
                 )
                 self.options["bg_style_power"] = np.clip(
                     io.input_number(
-                        "背景(dst)强度 Background style power",
+                        "Background style (dst) power",
                         default_bg_style_power,
                         add_info="0.0..100.0",
-                        help_message="学习预测脸部遮罩外的区域与 dst 相同。如果要将此选项用于whole_face，则必须使用 XSeg 训练蒙板。对于 whole_face，你必须使用 XSeg 训练蒙板。这会使脸部更像 dst。启用此选项会增加模型崩溃的几率。典型值为 2.0",
+                        help_message="Learning to predict the area outside the face mask is the same as dst. To use this option for whole_face, you must use the XSeg training mask. For whole_face, you must use the XSeg training mask. This will make the face more like dst. enabling this option will increase the chance of model crashes. Typical value is 2.0",
                     ),
                     0.0,
                     100.0,
                 )
 
                 self.options["ct_mode"] = io.input_str(
-                    f"色彩转换模式 Color transfer for src faceset",
+                    f"Color transfer for src faceset",
                     default_ct_mode,
                     ["none", "rct", "lct", "mkl", "idt", "sot", "fs-aug", "cc-aug"],
-                    help_message="改变靠近 dst 样本的 src 样本的颜色分布。尝试所有模式，找出最佳方案。CC和FS aug 为 dst 和 src 添加随机颜色",
+                    help_message="Change the color distribution of the src sample close to the dst sample. Try all modes to find the best solution. cc and fs aug add random colors to dst and src",
                 )
                 self.options["random_color"] = io.input_bool(
-                    "随机颜色 Random color",
+                    "Random color",
                     default_random_color,
-                    help_message="在LAB色彩空间中，样本随机围绕 L 轴旋转，有助于训练泛化。说人话就是亮度不变，但是色相变化比hsv大。hsv的亮度和对比确实不建议大幅度，所以本选项是互补的，建议是轮流开启而非同时开启！",
+                    help_message="In LAB color space, the samples are randomly rotated around the L-axis, which helps train generalization. To put it in human terms, the brightness remains the same, but the hue changes more than hsv. hsv's brightness and contrast are really not recommended to be drastic, so this option is complementary, and the recommendation is to turn it on in rotation rather than at the same time!",
                 )
                 self.options["clipgrad"] = io.input_bool(
-                    "启用梯度裁剪 Enable gradient clipping",
+                    "Enable gradient clipping",
                     default_clipgrad,
-                    help_message="梯度裁剪降低了模型崩溃的几率，但牺牲了训练速度",
+                    help_message="Gradient trimming reduces the chance of model crashes, but sacrifices training speed",
                 )
 
                 self.options["pretrain"] = io.input_bool(
-                    "启用预训练模式 Enable pretraining mode",
+                    "Enable pretraining mode",
                     default_pretrain,
-                    help_message="使用大量各种人脸预训练模型,模型可用于更快地训练伪造数据.强制使用 random_warp=N, random_flips=Y, gan_power=0.0, lr_dropout=N, styles=0.0, uniform_yaw=Y",
+                    help_message="Use a large variety of face pre-training models that can be used to train fake data faster. Forces the use of random_warp=N, random_flips=Y, gan_power=0.0, lr_dropout=N, styles=0.0, uniform_yaw=Y",
                 )
 
         if self.options["pretrain"] and self.get_pretraining_data_path() is None:
@@ -639,23 +639,23 @@ class MEModel(ModelBase):
         self.gan_model_changed = (
             default_gan_patch_size != self.options["gan_patch_size"]
         ) or (default_gan_dims != self.options["gan_dims"])
-        # 预训转正
+        # pre-training to regularization
         self.pretrain_just_disabled = (
             default_pretrain == True and self.options["pretrain"] == False
         )
 
-    # 重写父类的on_initialize方法
+    # Override the on_initialize method of the parent class
     def on_initialize(self):
-        # 获取当前设备配置和初始化数据格式
+        # Get the current device configuration and initialization data format
         device_config = nn.getCurrentDeviceConfig()
         devices = device_config.devices
         self.model_data_format = (
             "NCHW" if len(devices) != 0 and not self.is_debug() else "NHWC"
         )
         nn.initialize(data_format=self.model_data_format)
-        tf = nn.tf  # TensorFlow引用
+        tf = nn.tf  # TensorFlow references
 
-        # 设置分辨率和脸部类型
+        # Setting resolution and face type
         self.resolution = resolution = self.options["resolution"]
         self.face_type = {
             "h": FaceType.HALF,
@@ -666,11 +666,11 @@ class MEModel(ModelBase):
             "head": FaceType.HEAD,
         }[self.options["face_type"]]
 
-        # 设置眼睛和嘴巴优先级
+        # Setting Eye and Mouth Priorities
         eyes_prio = self.options["eyes_prio"]
         mouth_prio = self.options["mouth_prio"]
 
-        # 解析架构类型
+        # Parsing Architecture Types
         archi_split = self.options["archi"].split("-")
         if len(archi_split) == 2:
             archi_type, archi_opts = archi_split
@@ -678,35 +678,35 @@ class MEModel(ModelBase):
             archi_type, archi_opts = archi_split[0], None
         self.archi_type = archi_type
 
-        # 设置AutoEncoder、Encoder和Decoder的维度
+        # Setting the dimensions of AutoEncoder, Encoder and Decoder
         ae_dims = self.options["ae_dims"]
         e_dims = self.options["e_dims"]
         d_dims = self.options["d_dims"]
         d_mask_dims = self.options["d_mask_dims"]
 
-        # 设置是否预训练
+        # Setting whether to pre-train or not
         self.pretrain = self.options["pretrain"]
         if self.pretrain_just_disabled:
-            ask_for_clean = input("是否将迭代数归零？请输入 'y' 或 'n': ")
+            ask_for_clean = input("Does it zero out the number of iterations? Please enter 'y' or 'n':")
             if ask_for_clean.lower() == "y":
                 self.set_iter(0)
-                print("迭代数已重置！")
+                print("The number of iterations has been reset!")
             else:
-                print("保留迭代数结束预训！")
+                print("Retain the number of iterations to end pre-training!")
 
-        # 设置是否使用AdaBelief优化器
+        # Set whether or not to use the AdaBelief optimizer
         adabelief = self.options["adabelief"]
 
-        # 设置是否使用半精度浮点数
+        # Set whether to use half-precision floating point numbers
         use_fp16 = self.options["use_fp16"]
         if self.is_exporting:
             use_fp16 = io.input_bool(
                 "Export quantized?",
                 False,
-                help_message="使导出的模型更快。如果遇到问题，请禁用此选项。",
+                help_message="Makes exported models faster. If you encounter problems, disable this option.",
             )
 
-        # 设置相关参数 （已解锁预训练的所有锁定，除了GAN）
+        # Setting the relevant parameters (all locks of the pre-training have been unlocked, except GAN)
         self.gan_power = gan_power = 0.0 if self.pretrain else self.options["gan_power"]
         random_warp = self.options["random_warp"]
         random_src_flip = self.random_src_flip
@@ -714,20 +714,20 @@ class MEModel(ModelBase):
         random_hsv_power = self.options["random_hsv_power"]
         blur_out_mask = self.options["blur_out_mask"]
 
-        # 如果处于预训练阶段，调整一些参数设置（已解RW\flip\hsv\blur,保留gan和style的限制）
+        # If in the pre-training phase, adjust some parameter settings (RW\flip\hsv\blur, retain gan and style restrictions have been solved)
         if self.pretrain:
             self.options_show_override["gan_power"] = 0.0
             self.options_show_override["face_style_power"] = 0.0
             self.options_show_override["bg_style_power"] = 0.0
 
-        # 设置是否进行遮罩训练和颜色转换模式
+        # Setting whether to perform mask training and color conversion mode
         masked_training = self.options["masked_training"]
         ct_mode = self.options["ct_mode"]
         if ct_mode == "none":
             ct_mode = None
 
         """
-        # 根据配置文件的使用情况设置随机阴影源和目标
+        # Setting random shadow sources and targets based on profile usage
         if (
             self.read_from_conf and not self.config_file_exists
         ) or not self.read_from_conf:
@@ -738,7 +738,7 @@ class MEModel(ModelBase):
                 True if self.options["random_shadow"] in ["all", "dst"] else False
             )
 
-            # 如果是首次使用配置文件创建模型，则删除随机阴影选项
+            # Remove the random shading option if this is the first time a model is created using a profile
             if not self.config_file_exists and self.read_from_conf:
                 del self.options["random_shadow"]
         else:
@@ -746,7 +746,7 @@ class MEModel(ModelBase):
             random_shadow_dst = self.options["random_shadow_dst"]
         """
 
-        # 设置模型优化选项
+        # Setting Model Optimization Options
         models_opt_on_gpu = (
             False if len(devices) == 0 else self.options["models_opt_on_gpu"]
         )
@@ -757,14 +757,14 @@ class MEModel(ModelBase):
         )
         optimizer_vars_on_cpu = models_opt_device == "/CPU:0"
 
-        # 设置输入通道和形状
+        # Setting input channels and shapes
         input_ch = 3
         bgr_shape = self.bgr_shape = nn.get4Dshape(resolution, resolution, input_ch)
         mask_shape = nn.get4Dshape(resolution, resolution, 1)
         self.model_filename_list = []
 
         with tf.device("/CPU:0"):
-            # 在CPU上初始化占位符
+            # Initialize placeholders on the CPU
             self.warped_src = tf.placeholder(nn.floatx, bgr_shape, name="warped_src")
             self.warped_dst = tf.placeholder(nn.floatx, bgr_shape, name="warped_dst")
 
@@ -780,14 +780,14 @@ class MEModel(ModelBase):
                 nn.floatx, mask_shape, name="target_dstm_em"
             )
 
-        # 初始化模型架构
+        # Initializing the Model Architecture
         model_archi = nn.DeepFakeArchi(resolution, use_fp16=use_fp16, opts=archi_opts)
 
-        # 继续初始化模型的其他组件
+        # Continue initializing the other components of the model
         with tf.device(models_opt_device):
-            # 根据架构类型初始化模型的不同部分
+            # Initialize different parts of the model according to the type of architecture
             if "df" in archi_type:
-                # DF架构
+                # DF Architecture
                 self.encoder = model_archi.Encoder(
                     in_ch=input_ch, e_ch=e_dims, name="encoder"
                 )
@@ -821,7 +821,7 @@ class MEModel(ModelBase):
                     [self.decoder_dst, "decoder_dst.npy"],
                 ]
 
-                # 如果正在训练，初始化代码鉴别器
+                # Initialize code discriminator if training is in progress
                 if self.is_training:
                     if self.options["true_face_power"] != 0:
                         self.code_discriminator = nn.CodeDiscriminator(
@@ -832,7 +832,7 @@ class MEModel(ModelBase):
                         ]
 
             elif "liae" in archi_type:
-                # LIAE架构
+                # LIAE Architecture
                 self.encoder = model_archi.Encoder(
                     in_ch=input_ch, e_ch=e_dims, name="encoder"
                 )
@@ -881,7 +881,7 @@ class MEModel(ModelBase):
                     )
                     self.model_filename_list += [[self.D_src, "GAN.npy"]]
 
-                # 初始化优化器
+                # Initializing the Optimizer
                 lr = self.options["lr"]
 
                 if self.options["lr_dropout"] in ["y", "cpu"] and not self.pretrain:
@@ -893,7 +893,7 @@ class MEModel(ModelBase):
                 OptimizerClass = nn.AdaBelief if adabelief else nn.RMSprop
                 clipnorm = 1.0 if self.options["clipgrad"] else 0.0
 
-                # 根据架构类型设置优化器
+                # Setting the optimizer according to the architecture type
                 if "df" in archi_type:
                     self.src_dst_saveable_weights = (
                         self.encoder.get_weights()
@@ -918,7 +918,7 @@ class MEModel(ModelBase):
                             + self.decoder.get_weights()
                         )
 
-                # 初始化源和目标的优化器
+                # Optimizer for initializing sources and targets
                 self.src_dst_opt = OptimizerClass(
                     lr=lr,
                     lr_dropout=lr_dropout,
@@ -933,7 +933,7 @@ class MEModel(ModelBase):
                 )
                 self.model_filename_list += [(self.src_dst_opt, "src_dst_opt.npy")]
 
-                # 如果使用真实脸部强度，初始化代码鉴别器优化器
+                # If using real face strength, initialize the code discriminator optimizer
                 if self.options["true_face_power"] != 0:
                     self.D_code_opt = OptimizerClass(
                         lr=lr,
@@ -949,7 +949,7 @@ class MEModel(ModelBase):
                     )
                     self.model_filename_list += [(self.D_code_opt, "D_code_opt.npy")]
 
-                # 如果使用GAN，初始化GAN鉴别器优化器
+                # If using a GAN, initialize the GAN discriminator optimizer
                 if gan_power != 0:
                     self.D_src_dst_opt = OptimizerClass(
                         lr=lr,
@@ -966,26 +966,26 @@ class MEModel(ModelBase):
                     self.model_filename_list += [(self.D_src_dst_opt, "GAN_opt.npy")]
 
         if self.is_training:
-            # 调整多GPU环境下的批处理大小
-            gpu_count = max(1, len(devices))  # 获取GPU数量，至少为1
+            # Resizing batches in multi-GPU environments
+            gpu_count = max(1, len(devices))  # Get the number of GPUs, at least 1
             bs_per_gpu = max(
                 1, self.get_batch_size() // gpu_count
-            )  # 每个GPU的批处理大小，至少为1
-            self.set_batch_size(gpu_count * bs_per_gpu)  # 设置总的批处理大小
+            )  # Batch size per GPU, at least 1
+            self.set_batch_size(gpu_count * bs_per_gpu)  # Setting the total batch size
 
-            # 计算每个GPU的损失
-            gpu_pred_src_src_list = []  # GPU预测源到源的列表
-            gpu_pred_dst_dst_list = []  # GPU预测目标到目标的列表
-            gpu_pred_src_dst_list = []  # GPU预测源到目标的列表
-            gpu_pred_src_srcm_list = []  # GPU预测源到源掩码的列表
-            gpu_pred_dst_dstm_list = []  # GPU预测目标到目标掩码的列表
-            gpu_pred_src_dstm_list = []  # GPU预测源到目标掩码的列表
+            # Calculate the loss per GPU
+            gpu_pred_src_src_list = []  # GPU prediction source-to-source list
+            gpu_pred_dst_dst_list = []  # GPU predicts target-to-target list
+            gpu_pred_src_dst_list = []  # GPU predicts source-to-target list
+            gpu_pred_src_srcm_list = []  # List of GPU prediction source-to-source masks
+            gpu_pred_dst_dstm_list = []  # List of GPU predicted target-to-target masks
+            gpu_pred_src_dstm_list = []  # List of GPU prediction source-to-target masks
 
-            gpu_src_losses = []  # GPU源损失列表
-            gpu_dst_losses = []  # GPU目标损失列表
-            gpu_G_loss_gvs = []  # GPU生成器损失梯度列表
-            gpu_D_code_loss_gvs = []  # GPU判别器编码损失梯度列表
-            gpu_D_src_dst_loss_gvs = []  # GPU判别器源到目标损失梯度列表
+            gpu_src_losses = []  # GPU Source Loss List
+            gpu_dst_losses = []  # GPU target loss list
+            gpu_G_loss_gvs = []  # List of GPU generator loss gradients
+            gpu_D_code_loss_gvs = []  # List of GPU discriminator coding loss gradients
+            gpu_D_src_dst_loss_gvs = []  # List of GPU discriminator source-to-target loss gradients
 
             for gpu_id in range(gpu_count):
                 with tf.device(
@@ -994,37 +994,37 @@ class MEModel(ModelBase):
                     else f"/CPU:0"
                 ):
                     with tf.device(f"/CPU:0"):
-                        # 在CPU上进行切片操作，以避免所有批处理数据首先被传输到GPU
+                        # Slicing operations are performed on the CPU to avoid all batch data being transferred to the GPU first
                         batch_slice = slice(
                             gpu_id * bs_per_gpu, (gpu_id + 1) * bs_per_gpu
                         )
                         gpu_warped_src = self.warped_src[
                             batch_slice, :, :, :
-                        ]  # 切片后的变形源图像
+                        ]  # Deformation source image after slicing
                         gpu_warped_dst = self.warped_dst[
                             batch_slice, :, :, :
-                        ]  # 切片后的变形目标图像
+                        ]  # Deformed target image after slicing
                         gpu_target_src = self.target_src[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标源图像
+                        ]  # Target source image after slicing
                         gpu_target_dst = self.target_dst[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标目标图像
+                        ]  # Sliced Target Target Image
                         gpu_target_srcm_all = self.target_srcm[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标源掩码
+                        ]  # Target source mask after slicing
                         gpu_target_srcm_em = self.target_srcm_em[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标源紧急掩码
+                        ]  # Target source emergency mask after slicing
                         gpu_target_dstm_all = self.target_dstm[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标目标掩码
+                        ]  # Target destination mask after slicing
                         gpu_target_dstm_em = self.target_dstm_em[
                             batch_slice, :, :, :
-                        ]  # 切片后的目标目标紧急掩码
+                        ]  # Sliced Target Target Emergency Mask
 
-                    gpu_target_srcm_anti = 1 - gpu_target_srcm_all  # 源反向掩码
-                    gpu_target_dstm_anti = 1 - gpu_target_dstm_all  # 目标反向掩码
+                    gpu_target_srcm_anti = 1 - gpu_target_srcm_all  # source reverse mask
+                    gpu_target_dstm_anti = 1 - gpu_target_dstm_all  # Target reverse mask
 
                     if blur_out_mask:
                         sigma = resolution / 128
@@ -1049,9 +1049,9 @@ class MEModel(ModelBase):
                             + (x / y) * gpu_target_dstm_anti
                         )
 
-                    # 处理模型张量
+                    # Processing the model tensor
                     if "df" in archi_type:
-                        # 使用'df'架构类型
+                        # Using the 'df' architecture type
                         gpu_src_code = self.inter(self.encoder(gpu_warped_src))
                         gpu_dst_code = self.inter(self.encoder(gpu_warped_dst))
                         gpu_pred_src_src, gpu_pred_src_srcm = self.decoder_src(
@@ -1068,7 +1068,7 @@ class MEModel(ModelBase):
                         )
 
                     elif "liae" in archi_type:
-                        # 使用'liae'架构类型
+                        # Using the 'liae' architecture type
                         gpu_src_code = self.encoder(gpu_warped_src)
                         gpu_src_inter_AB_code = self.inter_AB(gpu_src_code)
                         gpu_src_code = tf.concat(
@@ -1098,109 +1098,109 @@ class MEModel(ModelBase):
 
                     gpu_pred_src_src_list.append(
                         gpu_pred_src_src
-                    )  # 将GPU预测的源到源结果添加到列表
+                    )  # Add source-to-source results of GPU predictions to the list
                     gpu_pred_dst_dst_list.append(
                         gpu_pred_dst_dst
-                    )  # 将GPU预测的目标到目标结果添加到列表
+                    )  # Add GPU-predicted target-to-target results to the list
                     gpu_pred_src_dst_list.append(
                         gpu_pred_src_dst
-                    )  # 将GPU预测的源到目标结果添加到列表
+                    )  # Add source-to-target results of GPU predictions to the list
 
                     gpu_pred_src_srcm_list.append(
                         gpu_pred_src_srcm
-                    )  # 将GPU预测的源到源掩码添加到列表
+                    )  # Add source-to-source masks for GPU predictions to the list
                     gpu_pred_dst_dstm_list.append(
                         gpu_pred_dst_dstm
-                    )  # 将GPU预测的目标到目标掩码添加到列表
+                    )  # Add GPU-predicted target-to-target masks to the list
                     gpu_pred_src_dstm_list.append(
                         gpu_pred_src_dstm
-                    )  # 将GPU预测的源到目标掩码添加到列表
+                    )  # Add source-to-target masks for GPU predictions to the list
 
-                    # 从一个组合掩码中解包各个掩码
+                    # Unpacking individual masks from a combined mask
                     gpu_target_srcm = tf.clip_by_value(
                         gpu_target_srcm_all, 0, 1
-                    )  # GPU源掩码
+                    )  # GPU Source Mask
                     gpu_target_dstm = tf.clip_by_value(
                         gpu_target_dstm_all, 0, 1
-                    )  # GPU目标掩码
+                    )  # GPU target mask
                     gpu_target_srcm_eye_mouth = tf.clip_by_value(
                         gpu_target_srcm_em - 1, 0, 1
-                    )  # GPU源眼睛嘴巴掩码
+                    )  # GPU Source Eye Mouth Mask
                     gpu_target_dstm_eye_mouth = tf.clip_by_value(
                         gpu_target_dstm_em - 1, 0, 1
-                    )  # GPU目标眼睛嘴巴掩码
+                    )  # GPU Target Eye Mouth Mask
                     gpu_target_srcm_mouth = tf.clip_by_value(
                         gpu_target_srcm_em - 2, 0, 1
-                    )  # GPU源嘴巴掩码
+                    )  # GPU Source Mouth Mask
                     gpu_target_dstm_mouth = tf.clip_by_value(
                         gpu_target_dstm_em - 2, 0, 1
-                    )  # GPU目标嘴巴掩码
+                    )  # GPU Target Mouth Mask
                     gpu_target_srcm_eyes = tf.clip_by_value(
                         gpu_target_srcm_eye_mouth - gpu_target_srcm_mouth, 0, 1
-                    )  # GPU源眼睛掩码
+                    )  # GPU Source Eye Mask
                     gpu_target_dstm_eyes = tf.clip_by_value(
                         gpu_target_dstm_eye_mouth - gpu_target_dstm_mouth, 0, 1
-                    )  # GPU目标眼睛掩码
+                    )  # GPU Target Eye Mask
 
                     gpu_target_srcm_blur = nn.gaussian_blur(
                         gpu_target_srcm, max(1, resolution // 32)
-                    )  # 模糊处理GPU源掩码
+                    )  # Fuzzy Processing GPU Source Mask
                     gpu_target_srcm_blur = (
                         tf.clip_by_value(gpu_target_srcm_blur, 0, 0.5) * 2
                     )
                     gpu_target_srcm_anti_blur = (
                         1.0 - gpu_target_srcm_blur
-                    )  # 反向模糊处理GPU源掩码
+                    )  # Reverse Fuzzy Processing GPU Source Masks
 
                     gpu_target_dstm_blur = nn.gaussian_blur(
                         gpu_target_dstm, max(1, resolution // 32)
-                    )  # 模糊处理GPU目标掩码
+                    )  # Fuzzy Processing GPU Target Mask
                     gpu_target_dstm_blur = (
                         tf.clip_by_value(gpu_target_dstm_blur, 0, 0.5) * 2
                     )
 
                     gpu_style_mask_blur = nn.gaussian_blur(
                         gpu_pred_src_dstm * gpu_pred_dst_dstm, max(1, resolution // 32)
-                    )  # 模糊处理风格掩码
+                    )  # Fuzzy Processing Style Mask
                     gpu_style_mask_blur = tf.stop_gradient(
                         tf.clip_by_value(gpu_target_srcm_blur, 0, 1.0)
                     )
                     gpu_style_mask_anti_blur = (
                         1.0 - gpu_style_mask_blur
-                    )  # 反向模糊处理风格掩码
+                    )  # Reverse Blur Processing Style Mask
 
                     gpu_target_dst_masked = (
                         gpu_target_dst * gpu_target_dstm_blur
-                    )  # 应用模糊处理的GPU目标掩码
+                    )  # GPU Target Masks for Applying Fuzzy Processing
 
                     gpu_target_src_anti_masked = (
                         gpu_target_src * gpu_target_srcm_anti_blur
-                    )  # 应用反向模糊处理的GPU源图像
+                    )  # GPU source image with inverse blurring applied
                     gpu_pred_src_src_anti_masked = (
                         gpu_pred_src_src * gpu_target_srcm_anti_blur
-                    )  # 应用反向模糊处理的GPU源预测图像
+                    )  # GPU Source Prediction Images Applying Inverse Fuzzy Processing
 
                     gpu_target_src_masked_opt = (
                         gpu_target_src * gpu_target_srcm_blur
                         if masked_training
                         else gpu_target_src
-                    )  # 根据是否掩码训练选择GPU源图像
+                    )  # Selection of GPU source images based on whether or not they are masked for training
                     gpu_target_dst_masked_opt = (
                         gpu_target_dst_masked if masked_training else gpu_target_dst
-                    )  # 根据是否掩码训练选择GPU目标图像
+                    )  # Selection of GPU target images based on whether or not they are masked for training
                     gpu_pred_src_src_masked_opt = (
                         gpu_pred_src_src * gpu_target_srcm_blur
                         if masked_training
                         else gpu_pred_src_src
-                    )  # 根据是否掩码训练选择GPU源预测图像
+                    )  # Selection of GPU source prediction images based on whether or not they are mask trained
                     gpu_pred_dst_dst_masked_opt = (
                         gpu_pred_dst_dst * gpu_target_dstm_blur
                         if masked_training
                         else gpu_pred_dst_dst
-                    )  # 根据是否掩码训练选择GPU目标预测图像
+                    )  # Selection of GPU target prediction images based on whether or not they are mask trained
 
                     if self.options["loss_function"] == "MS-SSIM":
-                        # 使用MS-SSIM损失函数
+                        # Using the MS-SSIM loss function
                         gpu_src_loss = 10 * nn.MsSsim(bs_per_gpu, input_ch, resolution)(
                             gpu_target_src_masked_opt,
                             gpu_pred_src_src_masked_opt,
@@ -1214,7 +1214,7 @@ class MEModel(ModelBase):
                             axis=[1, 2, 3],
                         )
                     elif self.options["loss_function"] == "MS-SSIM+L1":
-                        # 使用MS-SSIM+L1损失函数
+                        # Using MS-SSIM + L1 loss function
                         gpu_src_loss = 10 * nn.MsSsim(
                             bs_per_gpu, input_ch, resolution, use_l1=True
                         )(
@@ -1223,7 +1223,7 @@ class MEModel(ModelBase):
                             max_val=1.0,
                         )
                     else:
-                        # 使用其他损失函数
+                        # Using other loss functions
                         if resolution < 256:
                             gpu_src_loss = tf.reduce_mean(
                                 10
@@ -1265,7 +1265,7 @@ class MEModel(ModelBase):
                         )
 
                     if eyes_prio or mouth_prio:
-                        # 如果设置了眼睛或嘴巴优先级
+                        # If eye or mouth priority is set
                         if eyes_prio and mouth_prio:
                             gpu_target_part_mask = gpu_target_srcm_eye_mouth
                         elif eyes_prio:
@@ -1285,7 +1285,7 @@ class MEModel(ModelBase):
                     gpu_src_loss += tf.reduce_mean(
                         10 * tf.square(gpu_target_srcm - gpu_pred_src_srcm),
                         axis=[1, 2, 3],
-                    )  # 计算GPU源掩码和GPU源预测掩码之间的损失
+                    )  # Calculate the loss between the GPU source mask and the GPU source prediction mask
 
                     if self.options["background_power"] > 0:
                         bg_factor = self.options["background_power"]
@@ -1835,100 +1835,100 @@ class MEModel(ModelBase):
 
             self.AE_merge = AE_merge
 
-        # 遍历模型和对应的文件名
+        # Iterate over the model and the corresponding filenames
         for model, filename in io.progress_bar_generator(
-            self.model_filename_list, "初始化模型"
+            self.model_filename_list, "Initialization Model"
         ):
-            # 检查预训练是否刚刚被禁用
+            # Check if pre-training has just been disabled
             if self.pretrain_just_disabled:
                 do_init = False
-                # 如果架构类型包含"df"
+                # If the architecture type contains "df"
                 if "df" in archi_type:
-                    # 对于特定的模型，需要进行初始化
+                    # For specific models, initialization is required
                     if model == self.inter:
-                        print("预训练转正...")
+                        print("Pre-training to regularization...")
                         ask_for_clean = input(
-                            "是否重置inter？（重置后效果更好，但训练更慢）请输入 'y' 或 'n': "
+                            "Whether to reset the inter? (reset works better, but training is slower) Enter 'y' or 'n':"
                         )
                         if ask_for_clean.lower() == "y":
                             do_init = True
-                            print("inter已重置！")
+                            print("The inter has been reset!")
                         else:
                             do_init = False
-                            print("保留inter继续训练！建议开启随机扭曲！")
+                            print("Keep inter to continue training! It is recommended to turn on Random Twist!")
 
-                # 如果架构类型是"liae"
+                # If the architecture type is "liae"
                 elif "liae" in archi_type:
-                    # 对于特定的模型，需要进行初始化
+                    # For specific models, initialization is required
                     if model == self.inter_AB:
                         ask_for_clean = input(
-                            "是否重置inter_AB？（重置后效果更好，但训练更慢）请输入 'y' 或 'n': "
+                            "To reset inter_AB or not (reset works better, but training is slower) enter 'y' or 'n':"
                         )
                         if ask_for_clean.lower() == "y":
                             do_init = True
-                            print("inter_AB已重置！")
+                            print("inter_AB has been reset!")
                         else:
                             do_init = False
-                            print("保留inter_AB继续训练！建议开启随机扭曲！")
+                            print("Keep inter_AB to continue training! It is recommended to turn on Random Twist!")
             else:
-                # 检查是否是第一次运行
+                # Check if this is the first run
                 do_init = self.is_first_run()
-                # 如果是训练模式，并且GAN的能力不为0，对特定的模型进行初始化
+                # If it is a training mode and the GAN's capability is not 0, initialize the particular model
                 if self.is_training and gan_power != 0 and model == self.D_src:
                     if self.gan_model_changed:
                         do_init = True
 
-            # 如果不需要初始化，则尝试从文件加载模型权重
+            # If no initialization is required, attempt to load model weights from file
             if not do_init:
                 do_init = not model.load_weights(
                     self.get_strpath_storage_for_file(filename)
                 )
 
-            # 如果需要初始化，初始化模型权重
+            # If initialization is required, initialize the model weights
             if do_init:
                 model.init_weights()
 
         ###############
-        # 初始化样本生成器
+        # Initialize the sample generator
         if self.is_training:
-            # 如果是在训练模式下
+            # If it's in training mode
             training_data_src_path = (
-                self.training_data_src_path  # 使用指定的训练数据源路径
-                if not self.pretrain  # 如果不是在预训练模式
-                else self.get_pretraining_data_path()  # 否则使用预训练数据路径
+                self.training_data_src_path  # Use the specified training data source path
+                if not self.pretrain  # If not in pre-training mode
+                else self.get_pretraining_data_path()  # Otherwise use pre-trained data paths
             )
             training_data_dst_path = (
-                self.training_data_dst_path  # 使用指定的目标训练数据路径
-                if not self.pretrain  # 如果不是在预训练模式
-                else self.get_pretraining_data_path()  # 否则使用预训练数据路径
+                self.training_data_dst_path  # Use the specified target training data path
+                if not self.pretrain  # If not in pre-training mode
+                else self.get_pretraining_data_path()  # Otherwise use pre-trained data paths
             )
-            # 如果指定了ct_mode并且不是预训练模式，则使用目标训练数据路径
+            # If ct_mode is specified and it is not a pre-training mode, the target training data path is used
             random_ct_samples_path = (
                 training_data_dst_path
                 if ct_mode is not None and not self.pretrain
-                else None  # 否则不使用任何路径
+                else None  # Otherwise no path is used
             )
 
-            # 获取CPU核心数，但不超过设定的上限
+            # Get the number of CPU cores up to a set limit
             cpu_count = min(multiprocessing.cpu_count(), self.options["cpu_cap"])
-            src_generators_count = cpu_count // 2  # 源数据生成器的数量为CPU核心数的一半
+            src_generators_count = cpu_count // 2  # The number of source data generators is half the number of CPU cores
             dst_generators_count = (
                 cpu_count // 2
-            )  # 目标数据生成器的数量也是CPU核心数的一半
+            )  # The number of target data generators is also half the number of CPU cores
             if ct_mode is not None:
                 src_generators_count = int(
                     src_generators_count * 1.5
-                )  # 如果指定了ct_mode，则增加源数据生成器的数量
+                )  # If ct_mode is specified, increase the number of source data generators
 
-            dst_aug = None  # 初始化目标数据增强为None
-            allowed_dst_augs = ["fs-aug", "cc-aug"]  # 定义允许的目标数据增强类型
+            dst_aug = None  # Initialize target data enhancement to None
+            allowed_dst_augs = ["fs-aug", "cc-aug"]  # Define allowed target data enhancement types
             if ct_mode in allowed_dst_augs:
-                dst_aug = ct_mode  # 如果ct_mode是允许的类型，则使用该类型的数据增强
+                dst_aug = ct_mode  # If ct_mode is a permitted type, data enhancements of that type are used
 
             channel_type = (
-                SampleProcessor.ChannelType.LAB_RAND_TRANSFORM  # 如果开启了随机颜色选项
+                SampleProcessor.ChannelType.LAB_RAND_TRANSFORM  # If the random color option is turned on
                 if self.options["random_color"]
-                else SampleProcessor.ChannelType.BGR  # 否则使用BGR通道类型
+                else SampleProcessor.ChannelType.BGR  # Otherwise use the BGR channel type
             )
 
             # Check for pak names
@@ -2093,7 +2093,7 @@ class MEModel(ModelBase):
     def export_dfm(self):
         output_path = self.get_strpath_storage_for_file("model.dfm")
 
-        io.log_info(f"导出 .dfm 到 {output_path}")
+        io.log_info(f"Export .dfm to {output_path}")
 
         tf = nn.tf
         nn.set_data_format("NCHW")
@@ -2160,7 +2160,7 @@ class MEModel(ModelBase):
     # override
     def onSave(self):
         for model, filename in io.progress_bar_generator(
-            self.get_model_filename_list(), "保存中...", leave=False
+            self.get_model_filename_list(), "Saved...", leave=False
         ):
             model.save_weights(self.get_strpath_storage_for_file(filename))
 
@@ -2178,7 +2178,7 @@ class MEModel(ModelBase):
             and not self.pretrain
             and not self.pretrain_just_disabled
         ):
-            io.log_info("您正在从头开始训练模型。强烈建议使用预训练模型以提高效率.\n")
+            io.log_info("You are training a model from scratch. It is highly recommended to use a pre-trained model to increase efficiency.\n")
 
         (
             (warped_src, target_src, target_srcm, target_srcm_em),
@@ -2432,7 +2432,7 @@ class MEModel(ModelBase):
 
     # function is WIP
     def generate_training_state(self):
-        # 导入所需模块
+        # Import the required modules
         from tqdm import tqdm
 
         import datetime
@@ -2440,91 +2440,91 @@ class MEModel(ModelBase):
         from itertools import zip_longest
         import multiprocessing as mp
 
-        # 生成训练状态
+        # Generate training status
         src_gen = self.generator_list[
             0
-        ]  # 获取生成器列表中的第一个生成器对象，赋值给变量src_gen
+        ]  # Get the first generator object in the generator list and assign it to the variable src_gen
         dst_gen = self.generator_list[
             1
-        ]  # 获取生成器列表中的第二个生成器对象，赋值给变量dst_gen
-        self.src_sample_state = []  # 初始化变量self.src_sample_state为空列表
-        self.dst_sample_state = []  # 初始化变量self.dst_sample_state为空列表
+        ]  # Get the second generator object in the generator list and assign it to the variable dst_gen
+        self.src_sample_state = []  # Initialize variable self.src_sample_state to empty list
+        self.dst_sample_state = []  # Initialize variable self.dst_sample_state to empty list
 
-        src_samples = src_gen.samples  # 获取源生成器的样本
-        dst_samples = dst_gen.samples  # 获取目标生成器的样本
-        src_len = len(src_samples)  # 获取源样本的长度
-        dst_len = len(dst_samples)  # 获取目标样本的长度
-        length = src_len  # 初始化长度为源样本的长度
-        if length < dst_len:  # 如果源样本的长度小于目标样本的长度
-            length = dst_len  # 更新长度为目标样本的长度
+        src_samples = src_gen.samples  # Get a sample of the source generator
+        dst_samples = dst_gen.samples  # Get a sample of the target generator
+        src_len = len(src_samples)  # Get the length of the source sample
+        dst_len = len(dst_samples)  # Get the length of the target sample
+        length = src_len  # Initialization length is the length of the source sample
+        if length < dst_len:  # If the length of the source sample is less than the length of the target sample
+            length = dst_len  # The update length is the length of the target sample
 
         # set paths
         # create core folder
         self.state_history_path = self.saved_models_path / (
             f"{self.get_model_name()}_state_history"
         )
-        # 状态历史记录路径为保存模型路径下的特定模型名称加下划线加状态历史记录
+        # The state history path is the specific model name under the Save Model path plus an underscore plus the state history.
         if not self.state_history_path.exists():
-            # 如果状态历史记录路径不存在
+            # If the status history path does not exist
             self.state_history_path.mkdir(exist_ok=True)
-            # 在状态历史记录路径下创建新目录
+            # Create a new directory under the status history path
         # create state folder
-        idx_str = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")  # 获取当前时间戳
+        idx_str = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")  # Get current timestamp
         idx_state_history_path = (
             self.state_history_path / idx_str
-        )  # 获取状态历史记录路径
-        idx_state_history_path.mkdir()  # 创建状态历史记录路径
+        )  # Get status history path
+        idx_state_history_path.mkdir()  # Creating a Status History Path
         # create set folders
         self.src_state_path = (
             idx_state_history_path / "src"
-        )  # 指定源状态路径为索引状态历史路径下的"src"文件夹
-        self.src_state_path.mkdir()  # 创建源状态文件夹
+        )  # Specify the source state path as the "src" folder in the index state history path.
+        self.src_state_path.mkdir()  # Creating a source status folder
         self.dst_state_path = (
             idx_state_history_path / "dst"
-        )  # 指定目标状态路径为索引状态历史路径下的"dst"文件夹
-        self.dst_state_path.mkdir()  # 创建目标状态文件夹
+        )  # Specify the target state path as the "dst" folder in the index state history path.
+        self.dst_state_path.mkdir()  # Creating a destination status folder
 
-        print("Generating dataset state snapshot 生成数据集状态快照\r")
+        print("Generating dataset state snapshot\r")
 
         # doing batch 2 always since it is coded to always expect dst and src
         # if one is smaller reapeating the last sample as a placeholder
 
         # 0 means ignore and use dummy data
-        # 将源样本和目标样本进行等长打包，并使用0填充
+        # Pack the source and target samples in equal lengths and fill them with zeros
         data_list = list(zip_longest(src_samples, dst_samples, fillvalue=0))
 
-        # 创建一个全零的虚拟输入数组，形状为(self.resolution, self.resolution, 3)，数据类型为np.float32
+        # Create an all-zero virtual input array of shape (self.resolution, self.resolution, 3) with data type np.float32
         self._dummy_input = np.zeros(
             (self.resolution, self.resolution, 3), dtype=np.float32
         )
 
-        # 创建一个全零的虚拟掩码数组，形状为(self.resolution, self.resolution, 1)，数据类型为np.float32
+        # Create an all-zero virtual mask array of shape (self.resolution, self.resolution, 1) with data type np.float32
         self._dummy_mask = np.zeros(
             (self.resolution, self.resolution, 1), dtype=np.float32
         )
 
-        # 对于数据列表中的每个样本元组，使用tqdm库进行迭代
-        for sample_tuple in tqdm(data_list, desc="数据下载中", total=len(data_list)):
-            # 调用处理器函数处理样本元组
+        # For each sample tuple in the data list, iterate using the tqdm library
+        for sample_tuple in tqdm(data_list, desc="Data download in progress", total=len(data_list)):
+            # Call the processor function to process the sample tuple
             self._processor(sample_tuple)
 
         # save model state params
         # copy model summary
         # model_summary = self.options.copy()
-        model_summary = {}  # 创建一个空字典，用于存储模型摘要信息
+        model_summary = {}  # Create an empty dictionary for storing model summary information
         model_summary["iter"] = (
             self.get_iter()
-        )  # 获取当前迭代次数，并将其作为"iter"键的值存储到model_summary字典中
+        )  # Get the current iteration count and store it in the model_summary dictionary as the value of the "iter" key.
         model_summary["name"] = (
             self.get_model_name()
-        )  # 获取模型名称，并将其作为"name"键的值存储到model_summary字典中
+        )  # Get the name of the model and store it in the model_summary dictionary as the value of the "name" key.
 
         # error with some types, need to double check
         with open(idx_state_history_path / "model_summary.json", "w") as outfile:
-            # 使用open函数打开文件model_summary.json，以写入模式写入数据到文件中
-            # 文件指针会由with语句自动管理
+            # Use the open function to open the file model_summary.json and write the data to the file in write mode
+            # The file pointer is automatically managed by the with statement
             json.dump(model_summary, outfile)
-            # 将model_summary中的数据以json格式写入outfile文件中
+            # Write the data in model_summary to the outfile file in json format
 
         # training state, full loss stuff from .dat file - prolly should be global
         # state_history_json = self.loss_history
@@ -2538,50 +2538,50 @@ class MEModel(ModelBase):
             ]
         }
 
-        # 创建一个包含训练数据源路径和训练数据目标路径的配置字典
+        # Create a configuration dictionary containing the training data source path and the training data target path
         with open(self.state_history_path / "config.json", "w") as outfile:
             json.dump(config_dict, outfile)
         # save image loss data
         src_full_state_dict = {
-            "data": self.src_sample_state,  # 定义一个字典src_full_state_dict，其中键"data"的值为self.src_sample_state
-            "set": "src",  # 键"set"的值为"src"
-            "type": "set-state",  # 键"type"的值为"set-state"
+            "data": self.src_sample_state,  # Define a dictionary src_full_state_dict where the key "data" is self.src_sample_state.
+            "set": "src",  # The value of the key "set" is "src".
+            "type": "set-state",  # The value of the key "type" is "set-state".
         }
 
         with open(
             idx_state_history_path / "src_state.json", "w"
-        ) as outfile:  # 打开文件"src_state.json"，以写入方式打开，并将文件对象赋值给outfile
+        ) as outfile:  # Open the file "src_state.json" as a write file and assign the file object to outfile.
             json.dump(
                 src_full_state_dict, outfile
-            )  # 将src_full_state_dict以json格式写入outfile
+            )  # Write src_full_state_dict in json format to outfile
 
         dst_full_state_dict = {
-            "data": self.dst_sample_state,  # 将self.dst_sample_state赋值给键"data"
-            "set": "dst",  # 将字符串"dst"赋值给键"set"
-            "type": "set-state",  # 将字符串"set-state"赋值给键"type"
+            "data": self.dst_sample_state,  # Assign self.dst_sample_state to key "data".
+            "set": "dst",  # Assign the string "dst" to the key "set".
+            "type": "set-state",  # Assign the string "set-state" to the key "type".
         }
         with open(idx_state_history_path / "dst_state.json", "w") as outfile:
             json.dump(dst_full_state_dict, outfile)
 
-        print("完成")
+        print("fulfillment")
 
     def _get_formatted_image(self, raw_output):
-        # 将原始输出格式转换为指定的数据格式，并进行裁剪，使其值在0到1之间
+        # Converts the raw output format to the specified data format and crops it so that the value is between 0 and 1
         formatted = np.clip(
             nn.to_data_format(raw_output, "NHWC", self.model_data_format), 0.0, 1.0
         )
-        # 将第一个维度的维度数压缩，得到最终的输出图像
+        # Compress the number of dimensions of the first dimension to get the final output image
         formatted = np.squeeze(formatted, 0)
 
         return formatted
 
-    # 导出src dst Loss损失图日志=========================================================================
+    # Export src dst Loss Map Logs=========================================================================
     def _processor(self, samples_tuple):
         """
-        对输入的样本元组进行处理
+        Processing of input sample tuples
 
         Args:
-            samples_tuple: 一个包含两个样本的元组，samples_tuple[0]为源样本，samples_tuple[1]为目标样本
+            samples_tuple: A tuple containing two samples, samples_tuple[0] is the source sample and samples_tuple[1] is the target sample
 
         Returns:
             None
@@ -2609,46 +2609,46 @@ class MEModel(ModelBase):
             )
 
         (
-            src_loss,  # 源图像损失
-            dst_loss,  # 目标图像损失
-            pred_src_src,  # 源图像预测的源图像
-            pred_src_srcm,  # 源图像预测的源图像混合
-            pred_dst_dst,  # 目标图像预测的目标图像
-            pred_dst_dstm,  # 目标图像预测的目标图像强度变化
-            pred_src_dst,  # 源图像预测的目标图像
-            pred_src_dstm,  # 源图像预测的目标图像强度变化
-        ) = self.get_src_dst_information(  # 调用get_src_dst_information方法获取源图像和目标图像的相关信息
+            src_loss,  # Source Image Loss
+            dst_loss,  # Target image loss
+            pred_src_src,  # Source Image Predicted Source Image
+            pred_src_srcm,  # Source image blending for source image prediction
+            pred_dst_dst,  # Target image prediction of target image
+            pred_dst_dstm,  # Target Image Intensity Change for Target Image Prediction
+            pred_src_dst,  # Target image predicted from source image
+            pred_src_dstm,  # Intensity change of the target image predicted by the source image
+        ) = self.get_src_dst_information(  # Call the get_src_dst_information method to get information about the source and target images
             data_format_change(
                 src_sample_bgr
-            ),  # 调用data_format_change方法改变源图像颜色通道的顺序
+            ),  # Call the data_format_change method to change the order of the source image color channels
             data_format_change(
                 src_sample_bgr
-            ),  # 调用data_format_change方法改变源图像颜色通道的顺序
+            ),  # Call the data_format_change method to change the order of the source image color channels
             data_format_change(
                 src_sample_mask
-            ),  # 调用data_format_change方法改变源图像掩码的通道顺序
+            ),  # Call the data_format_change method to change the channel order of the source image masks
             data_format_change(
                 src_sample_mask_em
-            ),  # 调用data_format_change方法改变源图像掩码能量的通道顺序
+            ),  # Call the data_format_change method to change the channel order of the source image mask energy
             data_format_change(
                 dst_sample_bgr
-            ),  # 调用data_format_change方法改变目标图像颜色通道的顺序
+            ),  # Call the data_format_change method to change the order of the target image color channels
             data_format_change(
                 dst_sample_bgr
-            ),  # 调用data_format_change方法改变目标图像颜色通道的顺序
+            ),  # Call the data_format_change method to change the order of the target image color channels
             data_format_change(
                 dst_sample_mask
-            ),  # 调用data_format_change方法改变目标图像掩码的通道顺序
+            ),  # Call the data_format_change method to change the channel order of the target image mask
             data_format_change(
                 dst_sample_mask_em
-            ),  # 调用data_format_change方法改变目标图像掩码能量的通道顺序
+            ),  # Call the data_format_change method to change the channel order of the target image mask energy
         )
 
         if samples_tuple[0] != 0:
-            # 获取样本文件名的.stem
+            # Get the sample file name of the .stem
             src_file_name = Path(samples_tuple[0].filename).stem
 
-            # 将处理后的图像保存为jpg文件
+            # Save the processed image as a jpg file
             cv2_imwrite(
                 self.src_state_path / f"{src_file_name}_output.jpg",
                 self._get_formatted_image(pred_src_src) * 255,
@@ -2656,47 +2656,47 @@ class MEModel(ModelBase):
             )  # output
 
             src_data = {
-                # 将src_loss的第一个元素转换为浮点数并赋值给loss键
+                # Convert the first element of src_loss to a floating point number and assign it to the loss key
                 "loss": float(src_loss[0]),
-                # 将src_file_name加上后缀.jpg并赋值给input键
+                # Add suffix .jpg to src_file_name and assign to input key
                 "input": f"{src_file_name}.jpg",
-                # 将src_file_name加上后缀_output.jpg并赋值给output键
+                # Add suffix _output.jpg to src_file_name and assign to output key
                 "output": f"{src_file_name}_output.jpg",
             }
-            # 将src_data添加到self.src_sample_state列表中
+            # Add src_data to self.src_sample_state list
             self.src_sample_state.append(src_data)
 
         if samples_tuple[1] != 0:
-            # 获取文件名并去扩展名
+            # Get the filename and remove the extension
             dst_file_name = Path(samples_tuple[1].filename).stem
 
-            # 将预测结果保存为图片
+            # Save predictions as images
             cv2_imwrite(
                 self.dst_state_path / f"{dst_file_name}_output.jpg",
                 self._get_formatted_image(pred_dst_dst) * 255,
                 [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-            )  # 输出图片
+            )  # Output Image
             cv2_imwrite(
                 self.dst_state_path / f"{dst_file_name}_swap.jpg",
                 self._get_formatted_image(pred_src_dst) * 255,
                 [int(cv2.IMWRITE_JPEG_QUALITY), 100],
-            )  # 交换图片
+            )  # Exchange of pictures
 
-            # 构建保存结果的数据字典
+            # Constructing the data dictionary that holds the results
             dst_data = {
                 "loss": float(dst_loss[0]),
                 "input": f"{dst_file_name}.jpg",
                 "output": f"{dst_file_name}_output.jpg",
                 "swap": f"{dst_file_name}_swap.jpg",
             }
-            # 将结果数据添加到目标样本状态列表中
+            # Add result data to the list of target sample states
             self.dst_sample_state.append(dst_data)
 
-            # 删除self.dst_state_path文件夹
+            # Delete self.dst_state_path folder
             if os.path.exists(self.dst_state_path):
                 shutil.rmtree(self.dst_state_path)
 
-            # 删除self.src_state_path文件夹
+            # Delete self.src_state_path folder
             if os.path.exists(self.src_state_path):
                 shutil.rmtree(self.src_state_path)
 

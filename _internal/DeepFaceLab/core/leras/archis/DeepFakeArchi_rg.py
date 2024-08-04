@@ -123,7 +123,10 @@ class DeepFakeArchi(nn.ArchiBase):
                     else:
                         x = self.down1(x)
                     x = nn.flatten(x)
-                    # nn.flatten() 是一个操作，它将输入的多维数据（例如一个多维数组或张量）转换成一维形式。这通常在神经网络的某些阶段（如在全连接层之前）需要进行，因为全连接层通常需要一维的输入。举例：如果 x 是一个形状为 [batch_size, channels, height, width] 的四维张量（这是典型的卷积神经网络中的特征映射格式），nn.flatten(x) 会将其转换成形状为 [batch_size, channels * height * width] 的二维张量，其中每个批次的所有元素都被展平成一个长向量。这种操作使得数据能够被喂入到随后的全连接层中。
+                    # nn.flatten() is an operation that converts input multidimensional data (e.g. a multidimensional array or tensor) into a one-dimensional form. 
+                    # This is usually required at some stage of the neural network (e.g. before the fully connected layer), since the fully connected layer usually requires a one-dimensional input. 
+                    # Example: if x is a four-dimensional tensor of shape [batch_size, channels, height, width] (which is the typical format of feature mapping in a convolutional neural network), 
+                    # nn.flatten(x) will convert it to a 2D tensor, where all elements of each batch are flattened into one long vector. This operation allows the data to be fed into subsequent fully-connected layers.
 
                     if 'u' in opts:
                         x = nn.pixel_norm(x, axes=-1)
@@ -143,9 +146,9 @@ class DeepFakeArchi(nn.ArchiBase):
             class Inter(nn.ModelBase):
                 def __init__(self, in_ch, ae_ch, ae_out_ch, **kwargs):
                     self.in_ch, self.ae_ch, self.ae_out_ch = in_ch, ae_ch, ae_out_ch
-                    # in_ch（输入通道数）: 表示输入数据的通道数。是上一个输出的通道数乘以特征图的大小.
-                    # ae_ch（自编码器通道数）: 在自编码器网络中的中间层通道数。全连接层的隐层神经元的个数，ae_dims的大小。
-                    # ae_out_ch（自编码器输出通道数）: 表示自编码器输出的通道数。
+                    # in_ch (Number of input channels): Indicates the number of channels of input data. It is the number of channels of the last output multiplied by the size of the feature map.
+                    # ae_ch (Number of autocoder channels): number of intermediate layer channels in the autocoder network. Number of hidden layer neurons in the fully connected layer, size of ae_dims.
+                    # ae_out_ch (Number of self encoder output channels): Indicates the number of channels of self encoder output.
                     super().__init__(**kwargs)
 
                 def on_build(self):
@@ -179,22 +182,25 @@ class DeepFakeArchi(nn.ArchiBase):
 
             class Decoder(nn.ModelBase):
                 def on_build(self, in_ch, d_ch, d_mask_ch):
-                    # in_ch（输入通道数），d_ch（解码器中的通道数），和 d_mask_ch（掩码解码器中的通道数）。
-                    # 如果opts有 't' 则upscale0上采样有4层，掩码的upscalem0上采样也有4层，残差也有4层。没有 't'，则分别只有3层。
+                    # in_ch (number of input channels), d_ch (number of channels in the decoder), and d_mask_ch (number of channels in the mask decoder).
+                    # If opts has 't' then upscale0 upsampling has 4 layers, masked upscale0 upsampling also has 4 layers, and residuals also have 4 layers. Without 't' there are only 3 layers respectively.
                     if 't' not in opts:
                         self.upscale0 = Upscale(in_ch, d_ch*8, kernel_size=3)
                         self.upscale1 = Upscale(d_ch*8, d_ch*4, kernel_size=3)
                         self.upscale2 = Upscale(d_ch*4, d_ch*2, kernel_size=3)
-                        # self.upscale0, self.upscale1, self.upscale2: 初始化几个（非掩码）上采样层（Upscale），用于放大特征图。参数分别为输入通道数、输出通道数和卷积核大小。
+                        # self.upscale0, self.upscale1, self.upscale2: Initialize several (non-masked) upsampling layers (Upscale) for scaling the feature map. 
+                        # The parameters are the number of input channels, the number of output channels and the size of the convolution kernel.
                         self.res0 = ResidualBlock(d_ch*8, kernel_size=3)
                         self.res1 = ResidualBlock(d_ch*4, kernel_size=3)
                         self.res2 = ResidualBlock(d_ch*2, kernel_size=3)
-                        # 这些行创建了多个残差块（ResidualBlock）。残差块在深度学习中用于避免梯度消失问题，通过引入跳过连接。
+                        # These rows create multiple ResidualBlocks. Residual blocks are used in deep learning to avoid the gradient vanishing problem by introducing skip connections.
 
                         self.upscalem0 = Upscale(in_ch, d_mask_ch*8, kernel_size=3)
                         self.upscalem1 = Upscale(d_mask_ch*8, d_mask_ch*4, kernel_size=3)
                         self.upscalem2 = Upscale(d_mask_ch*4, d_mask_ch*2, kernel_size=3)
-                        # 这些行定义的是针对掩码（mask）相关的上采样层。in_ch是输入通道数，而d_mask_ch是掩码解码器的通道数。这里的d_mask_ch*8、d_mask_ch*4、d_mask_ch*2分别表示这些上采样层输出的通道数。这些层特别用于处理掩码信息，掩码在图像处理和计算机视觉任务中常用于识别或强调图像的特定部分。
+                        # These lines define the upsampling layers associated with the mask. 
+                        # in_ch is the number of input channels, while d_mask_ch is the number of channels for the mask decoder. Here d_mask_ch*8, d_mask_ch*4, and d_mask_ch*2 represent the number of channels output by these upsampling layers, 
+                        # respectively. These layers are especially used to process mask information, which is often used in image processing and computer vision tasks to identify or emphasize specific parts of an image.
 
                         self.out_conv  = nn.Conv2D( d_ch*2, 3, kernel_size=1, padding='SAME', dtype=conv_dtype)
 

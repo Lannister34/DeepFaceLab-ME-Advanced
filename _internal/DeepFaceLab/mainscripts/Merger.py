@@ -30,39 +30,39 @@ def main (model_class_name=None,
           xseg_models_path=None,
           cpu_only=None,
           reduce_clutter=False):
-    io.log_info ("正在准备 合成器.\r\n")
+    io.log_info ("Preparing the synthesizer. \r\n")
 
     try:
-        if not input_path.exists():        # 检查输入路径是否存在
-            io.log_err('没有找到输入目录（默认%WORKSPACE%\data_dst），请确保它存在') # 如果不存在，输出错误信息
+        if not input_path.exists():        # Check if the input path exists
+            io.log_err('Input directory not found (default %WORKSPACE%\data_dst), make sure it exists!') # If it does not exist, output an error message
             return
 
-        if not output_path.exists():       # 检查输出路径是否存在
-            output_path.mkdir(parents=True, exist_ok=True) # 如果不存在，创建输出路径
+        if not output_path.exists():       # Check if the output path exists
+            output_path.mkdir(parents=True, exist_ok=True) # If it does not exist, create the output path
 
-        if not output_mask_path.exists():  # 检查输出遮罩路径是否存在
-            output_mask_path.mkdir(parents=True, exist_ok=True) # 如果不存在，创建输出遮罩路径
+        if not output_mask_path.exists():  # Check if the output mask path exists
+            output_mask_path.mkdir(parents=True, exist_ok=True) # If it doesn't exist, create an output mask path
 
-        if not saved_models_path.exists(): # 检查模型保存路径是否存在
-            io.log_err('没有找到模型目录（默认%WORKSPACE%\model），请确保它存在') # 如果不存在，输出错误信息
+        if not saved_models_path.exists(): # Check if the model save path exists
+            io.log_err('The model directory was not found (default %WORKSPACE%\model), make sure it exists!') # If it does not exist, output an error message
             return
 
         # Initialize model
-        import models                       # 导入模型
-        model = models.import_model(model_class_name)(is_training=False,  # 初始化模型
+        import models                       # Import the model
+        model = models.import_model(model_class_name)(is_training=False,  # Initialize the model
                                                       saved_models_path=saved_models_path,
                                                       force_gpu_idxs=force_gpu_idxs,
                                                       force_model_name=force_model_name,
                                                       cpu_only=cpu_only,
                                                       reduce_clutter=reduce_clutter)
 
-        predictor_func, predictor_input_shape, cfg = model.get_MergerConfig()  # 获取合并配置
+        predictor_func, predictor_input_shape, cfg = model.get_MergerConfig()  # Get the merge configuration
 
         # Preparing MP functions
-        predictor_func = MPFunc(predictor_func)  # 准备多进程函数
+        predictor_func = MPFunc(predictor_func)  # Prepare multiprocess functions
 
-        run_on_cpu = len(nn.getCurrentDeviceConfig().devices) == 0  # 判断是否在CPU上运行
-        xseg_256_extract_func = MPClassFuncOnDemand(XSegNet, 'extract',  # XSeg抠图功能
+        run_on_cpu = len(nn.getCurrentDeviceConfig().devices) == 0  # Determine if it's running on the CPU
+        xseg_256_extract_func = MPClassFuncOnDemand(XSegNet, 'extract',  # XSeg keying function
                                                     name='XSeg',
                                                     resolution=256,
                                                     weights_file_root=xseg_models_path,
@@ -73,82 +73,82 @@ def main (model_class_name=None,
                                                     place_model_on_cpu=True,
                                                     run_on_cpu=run_on_cpu)
 
-        is_interactive = io.input_bool ("使用交互式合成器?", True) if not io.is_colab() else False # 是否使用交互式合并器
+        is_interactive = io.input_bool ("Using an interactive synthesizer?", True) if not io.is_colab() else False # Whether to use the interactive merger
 
-        if not is_interactive:  # 如果不是交互式的
-            cfg.ask_settings()  # 请求配置设置
+        if not is_interactive:  # If it's not interactive
+            cfg.ask_settings()  # Request configuration settings
             
-        subprocess_count = io.input_int("工作线程数?", max(8, multiprocessing.cpu_count()), 
-                                        valid_range=[1, multiprocessing.cpu_count()], help_message="指定要处理的线程数。低值可能影响性能。高值可能导致内存错误。该值不能大于CPU核心数" )
+        subprocess_count = io.input_int("Number of working threads?", max(8, multiprocessing.cpu_count()), 
+                                        valid_range=[1, multiprocessing.cpu_count()], help_message="Specifies the number of threads to process. Low values may affect performance. High values may cause memory errors. The value cannot be greater than the number of CPU cores" )
 
-        input_path_image_paths = pathex.get_image_paths(input_path)  # 获取输入路径下的图片路径
+        input_path_image_paths = pathex.get_image_paths(input_path)  # Get the path of the image under the input path
 
 
-        if cfg.type == MergerConfig.TYPE_MASKED:  # 如果配置类型为遮罩合并
-            if not aligned_path.exists():  # 检查Aligned目录是否存在
-                io.log_err('Aligned 目录未找到，请确保它存在。')  # Aligned目录不存在的错误消息
+        if cfg.type == MergerConfig.TYPE_MASKED:  # If the configuration type is Mask Merge
+            if not aligned_path.exists():  # Check if the Aligned directory exists
+                io.log_err('Aligned directory not found, make sure it exists.')  # Aligned directory does not exist error message
                 return
 
             packed_samples = None
             try:
-                packed_samples = samplelib.PackedFaceset.load(aligned_path, pak_name=pak_name)  # 尝试加载打包的面部集
+                packed_samples = samplelib.PackedFaceset.load(aligned_path, pak_name=pak_name)  # Trying to load a packaged facial set
             except:
-                io.log_err(f"加载 samplelib.PackedFaceset.load {str(aligned_path)}时发生错误, {traceback.format_exc()}")
+                io.log_err(f"Error loading samplelib.PackedFaceset.load {str(aligned_path)}, {traceback.format_exc()}")
 
 
-            if packed_samples is not None:  # 如果成功加载了打包的面部集
-                io.log_info ("使用打包的面部集。")  # 使用打包的面部集的日志信息
-                def generator():  # 定义生成器函数
-                    for sample in io.progress_bar_generator( packed_samples, "收集Aligned信息"):  # 进度条生成器
-                        filepath = Path(sample.filename)  # 文件路径
-                        yield filepath, DFLIMG.load(filepath, loader_func=lambda x: sample.read_raw_file()  )  # 加载DFLIMG
+            if packed_samples is not None:  # If the packed face set is successfully loaded
+                io.log_info ("Use packaged facial sets.")  # Use log messages from packaged facial sets
+                def generator():  # Define the generator function
+                    for sample in io.progress_bar_generator( packed_samples, "Gather Aligned Information"):  # Progress bar generator
+                        filepath = Path(sample.filename)  # File path
+                        yield filepath, DFLIMG.load(filepath, loader_func=lambda x: sample.read_raw_file()  )  # Load DFLIMG
             else:
-                def generator():  # 定义备用生成器函数
-                    for filepath in io.progress_bar_generator( pathex.get_image_paths(aligned_path), "收集Aligned信息"):  # 进度条生成器
-                        filepath = Path(filepath)  # 文件路径
-                        yield filepath, DFLIMG.load(filepath)  # 加载DFLIMG
+                def generator():  # Define alternate generator functions
+                    for filepath in io.progress_bar_generator( pathex.get_image_paths(aligned_path), "Collecting Aligned Information"):  # Progress bar generator
+                        filepath = Path(filepath)  # File path
+                        yield filepath, DFLIMG.load(filepath)  # Load DFLIMG
 
-            alignments = {}  # 初始化Aligned字典
-            multiple_faces_detected = False  # 多面孔检测标志
+            alignments = {}  # Initialize the Aligned dictionary
+            multiple_faces_detected = False  # Multi-face detection markers
 
-            for filepath, dflimg in generator():  # 遍历生成器
-                if dflimg is None or not dflimg.has_data():  # 如果DFLIMG无效或无数据
-                    io.log_err (f"{filepath.name} 不是一个dfl图像文件")  # 非DFL图像文件的错误消息
+            for filepath, dflimg in generator():  # Traversal generator
+                if dflimg is None or not dflimg.has_data():  # If DFLIMG is invalid or has no data
+                    io.log_err (f"{filepath.name} Not a dfl image file")  # Error messages for non-DFL image files
                     continue
 
-                source_filename = dflimg.get_source_filename()  # 获取源文件名
-                if source_filename is None:  # 如果源文件名不存在
+                source_filename = dflimg.get_source_filename()  # Get source file name
+                if source_filename is None:  # If the source file name does not exist
                     continue
 
-                source_filepath = Path(source_filename)  # 源文件路径
-                source_filename_stem = source_filepath.stem  # 源文件基本名
+                source_filepath = Path(source_filename)  # Source file path
+                source_filename_stem = source_filepath.stem  # Source document base name
 
-                if source_filename_stem not in alignments.keys():  # 如果基本名不在Aligned字典中
-                    alignments[ source_filename_stem ] = []  # 初始化键值
+                if source_filename_stem not in alignments.keys():  # If the base name is not in the Aligned dictionary
+                    alignments[ source_filename_stem ] = []  # Initialize keys
 
-                alignments_ar = alignments[ source_filename_stem ]  # 获取Aligned数组
-                alignments_ar.append ( (dflimg.get_source_landmarks(), filepath, source_filepath, dflimg ) )  # 添加Aligned信息
+                alignments_ar = alignments[ source_filename_stem ]  # Get the Aligned array
+                alignments_ar.append ( (dflimg.get_source_landmarks(), filepath, source_filepath, dflimg ) )  # Add Aligned information
 
-                if len(alignments_ar) > 1:  # 如果Aligned数组长度大于1
-                    multiple_faces_detected = True  # 设置多面孔检测标志为真
+                if len(alignments_ar) > 1:  # If the length of the Aligned array is greater than 1
+                    multiple_faces_detected = True  # Set the multi-face detection flag to true
 
-            if multiple_faces_detected:  # 如果检测到多面孔
-                io.log_info ("")  # 输出空日志信息
-                io.log_info ("警告：检测到多张面孔。每个源文件应只对应一个Aligned文件。")  # 输出警告信息
-                io.log_info ("")  # 输出空日志信息
+            if multiple_faces_detected:  # If multiple faces are detected
+                io.log_info ("")  # Output empty log messages
+                io.log_info ("Warning: multiple faces detected. Each source file should correspond to only one Aligned file.")  # Output warning messages
+                io.log_info ("")  # Output empty log messages
 
             for a_key in list(alignments.keys()):
                 a_ar = alignments[a_key]
                 if len(a_ar) > 1:
-                    for _, filepath, source_filepath, _ in a_ar:  # 遍历Aligned数组
-                        io.log_info (f"对齐文件 {filepath.name} 参考 {source_filepath.name} ")
+                    for _, filepath, source_filepath, _ in a_ar:  # Iterate over Aligned arrays
+                        io.log_info (f"Alignment file {filepath.name} references  {source_filepath.name} ")
                     io.log_info ("")
 
                 alignments[a_key] = [ [a[0], a[3]] for a in a_ar]
 
             if multiple_faces_detected:
-                io.log_info ("强烈建议分别处理各个人脸.")
-                io.log_info ("使用恢复原始文件名 'recover original filename' 来确定确切的重复项.")
+                io.log_info ("It is highly recommended to process each face separately.")
+                io.log_info ("Use 'recover original filename' to determine the exact duplicates.")
                 io.log_info ("")
 
 
@@ -176,66 +176,66 @@ def main (model_class_name=None,
             #            for p in input_path_image_paths ]
 
             if multiple_faces_detected:
-                io.log_info ("警告：检测到多个人脸.不会使用运动模糊.")
+                io.log_info ("Warning: Multiple faces detected. Motion blur will not be used.")
                 io.log_info ("")
             else:
-                s = 256  # 设置尺寸
-                local_pts = [ (s//2-1, s//2-1), (s//2-1,0) ] # 中心和上方点
-                frames_len = len(frames)  # 帧长度
-                for i in io.progress_bar_generator( range(len(frames)) , "计算运动矢量"):  # 进度条生成器
-                    fi_prev = frames[max(0, i-1)].frame_info  # 获取前一帧信息
-                    fi      = frames[i].frame_info  # 获取当前帧信息
-                    fi_next = frames[min(i+1, frames_len-1)].frame_info  # 获取下一帧信息
+                s = 256  # Setting the size
+                local_pts = [ (s//2-1, s//2-1), (s//2-1,0) ] # Center and upper points
+                frames_len = len(frames)  # Frame length
+                for i in io.progress_bar_generator( range(len(frames)) , "Calculate the motion vector"):  # Progress bar generator
+                    fi_prev = frames[max(0, i-1)].frame_info  # Get previous frame information
+                    fi      = frames[i].frame_info  # Get current frame information
+                    fi_next = frames[min(i+1, frames_len-1)].frame_info  # Get next frame information
                     if len(fi_prev.landmarks_list) == 0 or \
                        len(fi.landmarks_list) == 0 or \
                        len(fi_next.landmarks_list) == 0:
                             continue
 
-                    mat_prev = LandmarksProcessor.get_transform_mat ( fi_prev.landmarks_list[0], s, face_type=FaceType.FULL)  # 获取前一帧变换矩阵
-                    mat      = LandmarksProcessor.get_transform_mat ( fi.landmarks_list[0]     , s, face_type=FaceType.FULL)  # 获取当前帧变换矩阵
-                    mat_next = LandmarksProcessor.get_transform_mat ( fi_next.landmarks_list[0], s, face_type=FaceType.FULL)  # 获取下一帧变换矩阵
+                    mat_prev = LandmarksProcessor.get_transform_mat ( fi_prev.landmarks_list[0], s, face_type=FaceType.FULL)  # Get the transformation matrix of the previous frame
+                    mat      = LandmarksProcessor.get_transform_mat ( fi.landmarks_list[0]     , s, face_type=FaceType.FULL)  # Get the current frame transformation matrix
+                    mat_next = LandmarksProcessor.get_transform_mat ( fi_next.landmarks_list[0], s, face_type=FaceType.FULL)  # Get next frame transformation matrix
 
-                    pts_prev = LandmarksProcessor.transform_points (local_pts, mat_prev, True)  # 转换前一帧点
-                    pts      = LandmarksProcessor.transform_points (local_pts, mat, True)  # 转换当前帧点
-                    pts_next = LandmarksProcessor.transform_points (local_pts, mat_next, True)  # 转换下一帧点
+                    pts_prev = LandmarksProcessor.transform_points (local_pts, mat_prev, True)  # Convert the previous frame point
+                    pts      = LandmarksProcessor.transform_points (local_pts, mat, True)  # Convert the current frame point
+                    pts_next = LandmarksProcessor.transform_points (local_pts, mat_next, True)  # Convert the next frame point
 
-                    prev_vector = pts[0]-pts_prev[0]  # 前向矢量
-                    next_vector = pts_next[0]-pts[0]  # 后向矢量
+                    prev_vector = pts[0]-pts_prev[0]  # forward vector (math.)
+                    next_vector = pts_next[0]-pts[0]  # backward vector
 
-                    motion_vector = pts_next[0] - pts_prev[0]  # 运动矢量
-                    fi.motion_power = npla.norm(motion_vector)  # 运动强度
+                    motion_vector = pts_next[0] - pts_prev[0]  # motion vector
+                    fi.motion_power = npla.norm(motion_vector)  # exercise intensity
 
-                    motion_vector = motion_vector / fi.motion_power if fi.motion_power != 0 else np.array([0,0],dtype=np.float32)  # 规范化运动矢量
+                    motion_vector = motion_vector / fi.motion_power if fi.motion_power != 0 else np.array([0,0],dtype=np.float32)  # Normalized motion vectors
 
-                    fi.motion_deg = -math.atan2(motion_vector[1],motion_vector[0])*180 / math.pi  # 运动角度
+                    fi.motion_deg = -math.atan2(motion_vector[1],motion_vector[0])*180 / math.pi  # angle of motion
 
 
-        if len(frames) == 0:  # 如果无帧可合并
-            io.log_info ("输入目录中没有帧可合并。")  # 输出信息
+        if len(frames) == 0:  # If there are no frames to merge
+            io.log_info ("There are no frames in the input catalog to merge.")  # output message
         else:
-            if False:  # 保留用于可能的条件扩展
+            if False:  # Reserved for possible conditional extensions
                 pass
             else:
-                InteractiveMergerSubprocessor (  # 创建交互式合并子处理器实例并运行
-                            is_interactive         = is_interactive,  # 是否交互式
-                            merger_session_filepath = model.get_strpath_storage_for_file('merger_session.dat'),  # 合并会话文件路径
-                            predictor_func         = predictor_func,  # 预测函数
-                            predictor_input_shape  = predictor_input_shape,  # 预测输入形状
-                            face_enhancer_func     = face_enhancer_func,  # 面部增强函数
-                            xseg_256_extract_func  = xseg_256_extract_func,  # XSeg提取函数
-                            merger_config          = cfg,  # 合并配置
-                            frames                 = frames,  # 帧列表
-                            frames_root_path       = input_path,  # 帧根路径
-                            output_path            = output_path,  # 输出路径
-                            output_mask_path       = output_mask_path,  # 输出遮罩路径
-                            model_iter             = model.get_iter(),  # 模型迭代
-                            subprocess_count       = subprocess_count,  # 子进程数量
+                InteractiveMergerSubprocessor (  # Create an instance of the interactive merge subprocessor and run
+                            is_interactive         = is_interactive,  # Interactive or not
+                            merger_session_filepath = model.get_strpath_storage_for_file('merger_session.dat'),  # Merge session file paths
+                            predictor_func         = predictor_func,  # predictive function
+                            predictor_input_shape  = predictor_input_shape,  # Predicting Input Shapes
+                            face_enhancer_func     = face_enhancer_func,  # Facial Enhancement Functions
+                            xseg_256_extract_func  = xseg_256_extract_func,  # XSeg Extraction Function
+                            merger_config          = cfg,  # Merge Configuration
+                            frames                 = frames,  # frame list
+                            frames_root_path       = input_path,  # root path of a frame
+                            output_path            = output_path,  # output path
+                            output_mask_path       = output_mask_path,  # Output Mask Path
+                            model_iter             = model.get_iter(),  # Model Iteration
+                            subprocess_count       = subprocess_count,  # Number of subprocesses
                         ).run()
 
-        model.finalize()  # 最终化模型
+        model.finalize()  # finalized model
 
-    except Exception as e:  # 捕获异常
-        print ( traceback.format_exc() )  # 打印异常堆栈
+    except Exception as e:  # Catching exceptions
+        print ( traceback.format_exc() )  # Print the exception stack
 
 
 """
@@ -246,7 +246,7 @@ for filepath in io.progress_bar_generator(input_path_image_paths, "Collecting in
 
     dflimg = DFLIMG.x(filepath)
     if dflimg is None:
-        io.log_err ("%s 不是DFL图像文件" % (filepath.name) )
+        io.log_err ("%s Not a DFL image file" % (filepath.name) )
         continue
     filesdata += [ ( FrameInfo(filepath=filepath, landmarks_list=[dflimg.get_landmarks()] ), dflimg.get_source_filename() ) ]
 
