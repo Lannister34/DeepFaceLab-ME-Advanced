@@ -108,7 +108,7 @@ class MergerConfigMasked(MergerConfig):
                        mode='overlay',
                        masked_hist_match=True,
                        hist_match_threshold = 238,
-                       mask_mode = 4,
+                       mask_mode = 7,
                        erode_mask_modifier = 0,
                        blur_mask_modifier = 0,
                        motion_blur_power = 0,

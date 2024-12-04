@@ -13,7 +13,7 @@ call _internal\setenv.bat
     --output-mask-dir "%WORKSPACE%\data_dst\merged_mask" ^
     --aligned-dir "%WORKSPACE%\data_dst\aligned" ^
     --model-dir "%WORKSPACE%\model" ^
-    --xseg-dir "%INTERNAL%\model_generic_xseg" ^
+    --xseg-dir "%WORKSPACE%\xseg_model" ^
     --model ME
 
 pause

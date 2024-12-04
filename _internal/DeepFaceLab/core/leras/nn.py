@@ -199,6 +199,8 @@ class nn():
 
     @staticmethod
     def ask_choose_device_idxs(choose_only_one=False, allow_cpu=True, suggest_best_multi_gpu=False, suggest_all_gpu=False):
+        # Hardcoded first GPU, remove string if need to select
+        return [0]
         devices = Devices.getDevices()
         if len(devices) == 0:
             return []

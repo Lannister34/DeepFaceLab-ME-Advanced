@@ -14,3 +14,10 @@ _internal/pretrain_Quick512/
 _internal/python_common/
 _internal/XnViewMP/
 *.npy
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.dat
+*.txt
+*.pyc

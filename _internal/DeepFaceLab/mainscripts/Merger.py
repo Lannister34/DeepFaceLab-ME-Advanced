@@ -2,9 +2,10 @@ import math
 import multiprocessing
 import traceback
 from pathlib import Path
-
+import os
 import numpy as np
 import numpy.linalg as npla
+import pickle
 
 import samplelib
 from core import pathex
@@ -62,24 +63,73 @@ def main (model_class_name=None,
         predictor_func = MPFunc(predictor_func)  # Prepare multiprocess functions
 
         run_on_cpu = len(nn.getCurrentDeviceConfig().devices) == 0  # Determine if it's running on the CPU
+
+        saved_models_names = []
+        for filepath in pathex.get_file_paths(xseg_models_path):
+            filepath_name = filepath.name
+            if filepath_name.endswith(f'XSeg_data.dat'):
+                saved_models_names += [(filepath_name.split('_')[0], os.path.getmtime(filepath))]
+
+        saved_models_names = [x[0] for x in saved_models_names]
+        if len(saved_models_names) == 1:
+            model_name = saved_models_names[0]  # XSeg
+        elif len(saved_models_names) > 1:
+
+            io.log_info("Choose XSEG model")
+
+            for i, model_name in enumerate(saved_models_names):
+                s = f"[{i}] : {model_name} "
+                io.log_info(s)
+
+            inp = io.input_str(f"", "0", show_default_value=False)
+            model_idx = -1
+            try:
+                model_idx = np.clip(int(inp), 0, len(saved_models_names) - 1)
+            except:
+                pass
+
+            if model_idx == -1:
+                model_name = inp
+            else:
+                model_name = saved_models_names[model_idx]
+        else:
+            print("No XSeg model was found")
+        if model_name == "XSeg":
+            model_dat = xseg_models_path / ('XSeg_data.dat')
+        else:
+            model_dat = xseg_models_path / (model_name + '_XSeg_data.dat')
+        if model_dat.exists():
+            dat = pickle.loads(model_dat.read_bytes())
+            dat_options = dat.get('options', None)
+            if dat_options is not None:
+                face_type = dat_options.get('face_type', None)
+                if model_name == "XSeg":
+                    full_name = "XSeg"
+                    resolution = 256
+                else:
+                    resolution = dat_options.get('resolution', None)
+                    full_name = model_name + '_XSeg'
+
         xseg_256_extract_func = MPClassFuncOnDemand(XSegNet, 'extract',  # XSeg keying function
-                                                    name='XSeg',
-                                                    resolution=256,
+                                                    name=full_name,
+                                                    resolution=resolution,
                                                     weights_file_root=xseg_models_path,
                                                     place_model_on_cpu=True,
-                                                    run_on_cpu=run_on_cpu)
+                                                    run_on_cpu=run_on_cpu,
+                                                    raise_on_no_model_files=False)
 
         face_enhancer_func = MPClassFuncOnDemand(FaceEnhancer, 'enhance',
                                                     place_model_on_cpu=True,
                                                     run_on_cpu=run_on_cpu)
-
-        is_interactive = io.input_bool ("Using an interactive synthesizer?", True) if not io.is_colab() else False # Whether to use the interactive merger
+        is_interactive = True
+        # Uncomment if you need non-interactive mode
+        # is_interactive = io.input_bool("Using an interactive synthesizer?",
+        #    True) if not io.is_colab() else False
 
         if not is_interactive:  # If it's not interactive
             cfg.ask_settings()  # Request configuration settings
             
-        subprocess_count = io.input_int("Number of working threads?", max(8, multiprocessing.cpu_count()), 
-                                        valid_range=[1, multiprocessing.cpu_count()], help_message="Specifies the number of threads to process. Low values may affect performance. High values may cause memory errors. The value cannot be greater than the number of CPU cores" )
+        subprocess_count = multiprocessing.cpu_count()
 
         input_path_image_paths = pathex.get_image_paths(input_path)  # Get the path of the image under the input path
 

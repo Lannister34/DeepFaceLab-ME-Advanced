@@ -77,7 +77,6 @@ def trainerThread (s2c, c2s, e,
                 if not debug and not is_reached_goal:
                     io.log_info ("正在保存...", end='\r')
                     model.save()
-                    shared_state['after_save'] = True
                     
             def model_backup():
                 if not debug and not is_reached_goal:
@@ -165,7 +164,6 @@ def trainerThread (s2c, c2s, e,
     
                             # 计算从上次保存迭代到当前迭代的平均损失值
                             mean_loss = np.mean(loss_history[save_iter:iter], axis=0)
-                            
                             global_mean_loss.src="[{:.4f}]".format(mean_loss[0])
                             global_mean_loss.dst="[{:.4f}]".format(mean_loss[1])
                                           
