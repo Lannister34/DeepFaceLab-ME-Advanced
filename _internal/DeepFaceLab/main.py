@@ -566,6 +566,40 @@ if __name__ == "__main__":
     def process_merge(arguments):
         osex.set_process_lowest_prio()
         from mainscripts import Merger
+        xseg_path = Path(arguments.xseg_dir)
+
+        # collect xseg model directories located in workspace
+        xseg_dirs = []
+        workspace_path = xseg_path.parent
+        if workspace_path.exists():
+            for p in workspace_path.iterdir():
+                if p.is_dir() and p.name.startswith("xseg_model"):
+                    dat_files = list(p.glob("*_XSeg_data.dat"))
+                    dat_files += list(p.glob("XSeg_data.dat"))
+                    if dat_files:
+                        mtime = max(f.stat().st_mtime for f in dat_files)
+                        xseg_dirs.append((p, mtime))
+
+        if len(xseg_dirs) > 1:
+            xseg_dirs = [p for p, _ in sorted(xseg_dirs, key=lambda x: x[1], reverse=True)]
+            io.log_info("Select XSeg model directory")
+            for i, p in enumerate(xseg_dirs):
+                s = f"[{i}] : {p.name}"
+                if i == 0:
+                    s += " - Last used"
+                io.log_info(s)
+
+            inp = io.input_str(f"", "0", show_default_value=False)
+            model_idx = -1
+            try:
+                model_idx = max(0, min(int(inp), len(xseg_dirs) - 1))
+            except Exception:
+                pass
+
+            if model_idx != -1:
+                xseg_path = xseg_dirs[model_idx]
+        elif len(xseg_dirs) == 1:
+            xseg_path = xseg_dirs[0][0]
 
         Merger.main(
             model_class_name=arguments.model_name,
@@ -579,7 +613,7 @@ if __name__ == "__main__":
             else None,
             pak_name=arguments.pak_name,
             force_gpu_idxs=arguments.force_gpu_idxs,
-            xseg_models_path=Path(arguments.xseg_dir),
+            xseg_models_path=xseg_path,
             cpu_only=arguments.cpu_only,
         )
 
